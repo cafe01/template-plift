@@ -13,8 +13,9 @@ use Plift::Context;
 our $VERSION = "0.01";
 
 use constant {
-    XML_DOCUMENT_NODE => 9,
-    XML_DOCUMENT_FRAG_NODE => 11
+    XML_DOCUMENT_NODE      => 9,
+    XML_DOCUMENT_FRAG_NODE => 11,
+    XML_DTD_NODE           => 14
 };
 
 has 'path', is => 'ro', default => sub { [] };
@@ -22,7 +23,10 @@ has 'plugins', is => 'ro', default => sub { [] };
 has 'encoding', is => 'rw', default => 'UTF-8';
 has 'debug', is => 'rw', default => sub { $ENV{PLIFT_DEBUG} };
 has 'max_file_size', is => 'rw', default => 1024 * 1024;
+has 'enable_cache', is => 'rw', default => 1;
+has 'max_cached_files', is => 'rw', default => 50;
 
+has '_cache', is => 'ro', default => sub { {} };
 
 
 
@@ -91,20 +95,66 @@ sub load_template {
         unless $template_file;
 
     # update contex relative path
-    $ctx->push_file($template_file);
+    # $ctx->push_file($template_file);
     $ctx->relative_path_prefix($template_file->parent->relative($template_path));
 
-    # max file size
+    # cached file
+    my $stat = $template_file->stat;
+    my $mtime = $stat->mtime;
+    my $cache = $self->_cache;
+    my $dom;
 
+    # get from cache
+    if ($self->enable_cache && (my $entry = $cache->{"$template_file"})) {
 
-    # parse source
-    my $dom = XML::LibXML::jQuery->new($ctx->encoding eq 'UTF-8' ? $template_file->slurp_utf8
-                                                                 : $template_file->slurp( binmode => ":unix:encoding(".$self->encoding.")"));
+        if ($entry->{mtime} == $mtime) {
+            $dom = $entry->{dom}->clone->contents;
+            $dom->append_to($dom->document);
+            $entry->{hits} += 1;
+            $entry->{last_hit} = time;
+            # printf STDERR "# Plift cache hit: '$template_file' => %d hits\n", $entry->{hits};
+        }
+        else {
+            delete $cache->{"$template_file"};
+        }
+    }
+
+    unless ($dom) {
+
+        # max file size
+        die sprintf("Template file '%s' exceeds the max_file_size option! (%d > %d)\n", $template_file, $stat->size, $self->max_file_size)
+            if $stat->size > $self->max_file_size;
+
+        # parse source
+        $dom = XML::LibXML::jQuery->new($ctx->encoding eq 'UTF-8' ? $template_file->slurp_utf8
+                                                                  : $template_file->slurp( binmode => ":unix:encoding(".$self->encoding.")"));
+
+        # cache it
+        if ($self->enable_cache) {
+
+            # control cache size
+            if (scalar keys(%$cache) == $self->max_cached_files) {
+
+                my @least_used = sort { $cache->{$b}{last_hit} <=> $cache->{$a}{last_hit} }
+                                 keys %$cache;
+
+                delete $cache->{$least_used[0]};
+            }
+
+            $cache->{"$template_file"} = {
+                dom   => $dom->document->clone,
+                mtime => $mtime,
+                hits => 0,
+                last_hit => 0,
+            };
+        }
+    }
 
     # check for data-plift-template attr, and use that element
     my $body = $dom->xfind('//body[@data-plift-template]');
 
     if ($body->size) {
+
         my $selector = $body->attr('data-plift-template');
         $dom = $dom->find($selector);
         confess "Can't find template via selector '$selector' (referenced at <body data-plift-template=\"$selector\">)."
@@ -124,6 +174,7 @@ sub load_template {
 
         # adopt nodes
         my @nodes = map { $existing_document->adoptNode($_); $_ }
+                    grep { $_->nodeType != XML_DTD_NODE }
                     grep { $_->getOwner->nodeType == XML_DOCUMENT_NODE }
                     @{ $dom->{nodes} };
 

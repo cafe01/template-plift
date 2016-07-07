@@ -14,14 +14,14 @@ my $plift = Plift->new( path => ["$FindBin::Bin/plift"] );
 my $tt = Template->new( INCLUDE_PATH => ["$FindBin::Bin/tt"] );
 
 
-# print "Plift:\n".plift();
+# print "Plift:\n".plift().plift(); exit;
 # print "Pure:\n".pure();
 # print "TT:\n".tt(); exit;
 
 cmpthese(shift || 5000, {
     Plift => \&plift,
-    # 'Template::Pure'  => \&pure,
-    'Template::Toolkit'  => \&tt,
+    'Template::Pure'  => \&pure,
+    # 'Template::Toolkit'  => \&tt,
     # load_files => sub {
     #
     #     my $file = path("$FindBin::Bin/pure/footer.html")->slurp_utf8;

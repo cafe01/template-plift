@@ -3,6 +3,7 @@ package Plift::Context;
 use Moo;
 use Carp;
 use Scalar::Util qw/ blessed /;
+use aliased 'XML::LibXML::jQuery';
 
 has 'template', is => 'ro', required => 1;
 has 'encoding', is => 'ro', default => 'UTF-8';
@@ -16,16 +17,7 @@ has 'is_rendering', is => 'rw', init_arg => undef, default => 0;
 
 has 'schema', is => 'ro', default => sub { {} };
 has '_data_stack',   is => 'ro', default => sub { [] };
-has '_files', is => 'ro', default => sub { [] };
 
-
-sub push_file {
-    push @{ shift->_files }, shift;
-}
-
-sub pop_file {
-    pop @{ shift->_files };
-}
 
 sub data {
     my $self = shift;
@@ -33,12 +25,6 @@ sub data {
     push @$stack, +{} if @$stack == 0;
     $stack->[-1];
 }
-
-
-sub current_file {
-    shift->_files->[-1]
-}
-
 
 
 sub set {
@@ -185,6 +171,7 @@ sub process_element {
     my $callback = sub {
 
         my ($i, $el) = @_;
+        $el = jQuery->new($el);
         my $tagname = $el->tagname;
 
         # printf STDERR "# el($i): %s\n", $el->as_html;
