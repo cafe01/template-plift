@@ -9,60 +9,22 @@ my $engine = Plift->new(
 );
 
 
-subtest 'find_template_file' => sub {
+subtest 'include' => sub {
 
-    is $engine->find_template_file('index'),
-       "$FindBin::Bin/templates/index.html";
-
-    is $engine->find_template_file('other_index'),
-       "$FindBin::Bin/other_templates/other_index.html";
-};
-
-
-subtest 'load_template' => sub {
-
-    is $engine->load_template('index')->find('h1')->size, 1;
-    is $engine->load_template('index')->find('p')->size, 1;
-};
-
-
-subtest 'get_handler' => sub {
-
-    my $include_handler = $engine->get_handler('include');
-    is $include_handler->{xpath}, './x-include | ./*[@data-plift-include]';
-};
-
-subtest 'add_handler' => sub {
-
-    my $foo_handler = sub {};
-    my $bar_handler = sub {};
-
-    $engine->add_handler({
-        name => 'foo',
-        tag => 'foo',
-        attribute => 'data-foo',
-        handler => $foo_handler
-
-    })->add_handler({
-        name => 'bar',
-        tag => ['x-bar', 'bar'],
-        attribute => [qw/ data-bar bar /],
-        handler => $bar_handler
+    my $ctx = $engine->template('layout');
+    my $doc = $ctx->render({
+        skip_section => 1,
+        include_all  => 1
     });
 
-    is $engine->get_handler('foo')->{xpath}, './foo | ./*[@data-foo]';
-    is $engine->get_handler('foo')->{sub}, $foo_handler;
-    is $engine->get_handler('bar')->{xpath}, './x-bar | ./bar | ./*[@data-bar] | ./*[@bar]';
-    is $engine->get_handler('bar')->{sub}, $bar_handler;
-};
-
-
-subtest 'process' => sub {
-
-    my $doc = $engine->process('index');
-
-    isa_ok $doc, 'XML::LibXML::jQuery';
-    isa_ok $doc->get(0), 'XML::LibXML::Document';
+    note $doc->as_html;
+    # note "IF SECTION:".$doc->find('if section')->as_html.')';
+    is $doc->find('header, footer')->size, 2;
+    is $doc->find('x-include, *[data-plift-include]')->size, 0;
+    is $doc->find('if.true section')->size, 1, 'if true';
+    is $doc->find('if.false section')->size, 0, 'if false';
+    is $doc->find('unless.true section')->size, 0, 'unless true';
+    is $doc->find('unless.false section')->size, 1, 'unless false';
 };
 
 

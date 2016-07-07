@@ -8,6 +8,7 @@ use Class::Load ();
 use Path::Tiny ();
 use XML::LibXML::jQuery ();
 use Carp;
+use Plift::Context;
 
 our $VERSION = "0.01";
 
@@ -22,7 +23,7 @@ has 'encoding', is => 'rw', default => 'UTF-8';
 has 'debug', is => 'rw', default => sub { $ENV{PLIFT_DEBUG} };
 has 'max_file_size', is => 'rw', default => 1024 * 1024;
 
-# has '_cache', is => 'ro', default => sub { {} };
+
 
 
 sub BUILD {
@@ -30,15 +31,7 @@ sub BUILD {
 
     # init components
     # builtin directives
-    my @components;
-
-    # include
-    $self->add_handler({
-        name      => 'include',
-        tag       => 'x-include',
-        attribute => 'data-plift-include',
-        handler   => \&_process_include
-    });
+    my @components = qw/ Handler::Include  Handler::Wrap /;
 
     # plugins
     push @components, map { $_ =~ /^\+/ ? $_ : 'Plugin::'.$_ }
@@ -57,44 +50,56 @@ sub BUILD {
 }
 
 
+sub template {
+    my ($self, $name, $options) = @_;
+    $options ||= {};
+
+    # path copy for the load_template closure
+    # this way we do not expose the engine nor the path to the context object
+    my @path = @{ $options->{path} || $self->path };
+
+    Plift::Context->new(
+        template => $name,
+        encoding => $options->{encoding} || $self->encoding,
+        handlers => [@{ $self->{handlers}}],
+        load_template => sub {
+            my ($ctx, $name) = @_;
+            $self->load_template($name, \@path, $ctx)
+        }
+    );
+}
+
+
 sub process {
-    my ($self, $template) = @_;
+    my ($self, $template, $data, $schema) = @_;
 
-    # process template
-    my $element = $self->load_template($template);
-    $self->process_element($element);
+    my $ctx = $self->template($template);
 
-    # run output filters
-    my $document = $element->document;
+    $ctx->at($schema)
+        if $schema;
 
-    # return document
-    $document;
+    $ctx->render($data);
 }
 
-sub process_element {
-    # body...
-}
-
-
-sub parse_html {
-    my ($self, $source) = @_;
-    XML::LibXML::jQuery->new($source);
-}
 
 sub load_template {
-    my ($self, $name, $existing_document) = @_;
+    my ($self, $name, $path, $ctx) = @_;
 
     # resolve template name to file
-    my ($template_file, $try_files) = $self->find_template_file($name);
-    die sprintf "Can't find a template file for template '%s'. Tried:\n%s\n", $name, join(",\n", @$try_files)
+    my ($template_file, $template_path) = $self->find_template_file($name, $path, $ctx->relative_path_prefix);
+    die sprintf "Can't find a template file for template '%s'. Tried:\n%s\n", $name, join(",\n", @$path)
         unless $template_file;
+
+    # update contex relative path
+    $ctx->push_file($template_file);
+    $ctx->relative_path_prefix($template_file->parent->relative($template_path));
 
     # max file size
 
 
     # parse source
-    my $dom = XML::LibXML::jQuery->new($self->encoding eq 'UTF-8' ? $template_file->slurp_utf8
-                                                                  : $template_file->slurp( binmode => ":unix:encoding(".$self->encoding.")"));
+    my $dom = XML::LibXML::jQuery->new($ctx->encoding eq 'UTF-8' ? $template_file->slurp_utf8
+                                                                 : $template_file->slurp( binmode => ":unix:encoding(".$self->encoding.")"));
 
     # check for data-plift-template attr, and use that element
     my $body = $dom->xfind('//body[@data-plift-template]');
@@ -107,7 +112,9 @@ sub load_template {
     }
 
     # adopt into document
-    if ($existing_document) {
+    if (my $existing_document = $ctx->document) {
+
+        $existing_document = $existing_document->get(0);
 
         # replace DTD
         if ($dom->size && (my $dtd = $dom->get(0)->ownerDocument->internalSubset)) {
@@ -117,28 +124,52 @@ sub load_template {
 
         # adopt nodes
         my @nodes = map { $existing_document->adoptNode($_); $_ }
-                    grep { node->getOwner->nodeType == XML_DOCUMENT_NODE }
+                    grep { $_->getOwner->nodeType == XML_DOCUMENT_NODE }
                     @{ $dom->{nodes} };
 
         # reinstantitate on new document
         $dom = XML::LibXML::jQuery->new(\@nodes);
     }
 
+    # 1st tempalte loaded, set contex document
+    else {
+        $ctx->document($dom->document);
+    }
+
     $dom;
 }
 
 sub find_template_file {
-    my ($self, $template_name) = @_;
-    my @try_files;
+    my ($self, $template_name, $path, $relative_prefix) = @_;
+    $relative_prefix ||= '';
 
-    foreach my $path (@{$self->path}) {
+    # append prefix to relative paths (Only './foo' and '../foo' are considered relative, not plain 'foo')
+    $template_name = "$relative_prefix/$template_name"
+        if $template_name =~ /^\.\.?\//
+           && defined $relative_prefix
+           && length $relative_prefix;
 
-        my $file = "$path/$template_name.html";
-        push @try_files, $file;
-        return Path::Tiny->new($file) if -e $file;
+    # clean \x00 char that can be used to truncate our string
+    $template_name =~ tr/\x00//d;
+
+    foreach my $path (@$path) {
+
+        if (-e (my $file = "$path/$template_name.html")) {
+
+            # check file is really child of path
+            $file = Path::Tiny->new($file)->realpath;
+            $path = Path::Tiny->new($path)->realpath;
+
+            unless ($path->subsumes($file)) {
+                warn "[Plift] attempt to traverse out of path via '$template_name'";
+                return;
+            }
+
+            return wantarray ? ($file, $path) : $file;
+        }
     }
 
-    wantarray ? (undef, \@try_files) : undef;
+    return;
 }
 
 sub add_handler {
@@ -152,11 +183,16 @@ sub add_handler {
 
     my @match;
 
-    push(@match, map { "./$_" } ref $config->{tag} ? @{$config->{tag}} : $config->{tag})
-        if exists $config->{tag};
+    for my $key (qw/ tag attribute /) {
+        $config->{$key} = [$config->{$key}]
+            if defined $config->{$key} && !ref $config->{$key};
+    }
 
-    push(@match, map { "./*[\@$_]" } ref $config->{attribute} ? @{$config->{attribute}} : $config->{attribute})
-        if exists $config->{attribute};
+    push(@match, map { ".//$_" } @{$config->{tag}})
+        if $config->{tag};
+
+    push(@match, map { ".//*[\@$_]" } @{$config->{attribute}})
+        if $config->{attribute};
 
     push @match, $config->{xpath}
         if $config->{xpath};
@@ -171,6 +207,8 @@ sub add_handler {
         unless $match;
 
     my $handler = {
+        tag => $config->{tag},
+        attribute => $config->{attribute},
         name => $config->{name},
         xpath => $match,
         sub => $config->{handler}
@@ -188,10 +226,6 @@ sub get_handler {
 }
 
 
-sub _process_include {
-    # body...
-}
-
 
 
 1;
@@ -208,12 +242,16 @@ Plift - It's new $module
     use Plift;
 
     my $plift = Plift->new(
-        path => \@paths, # defaul ['.']
-        components => [qw/ Script Blog Gallery GoogleMap Youtube /],
+        path    => \@paths, # defaul ['.']
+        plugins => [qw/ Script Blog Gallery GoogleMap Youtube /],
     );
 
-    $plift->set('name', 'Carlos Fernando');
-    $plift->set('now', DataTime->now);
+    my $template = $plift->template("index"); # looks for index.html on every path
+
+    $template->set('name', 'Carlos Fernando');
+    $template->set('now', DataTime->now);
+
+    my $document = $template->render;
 
 
 
