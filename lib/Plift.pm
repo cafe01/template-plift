@@ -35,7 +35,7 @@ sub BUILD {
 
     # init components
     # builtin directives
-    my @components = qw/ Handler::Include  Handler::Wrap /;
+    my @components = qw/ Handler::Include  Handler::Wrap Handler::Render/;
 
     # plugins
     push @components, map { $_ =~ /^\+/ ? $_ : 'Plugin::'.$_ }

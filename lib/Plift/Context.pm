@@ -248,7 +248,7 @@ sub render  {
     my $element = $self->process_template($self->template);
 
     # render data
-    $self->render_element($element, $self->directives);
+    $self->render_directives($element, $self->directives);
 
     # TODO output filters
 
@@ -257,8 +257,8 @@ sub render  {
     $element->document
 }
 
-sub render_element {
-    my ($self, $el, $directives, $data_root) = @_;
+sub render_directives {
+    my ($self, $el, $directives) = @_;
 
     for (my $i = 0; $i < @$directives; $i += 2) {
 
@@ -278,27 +278,15 @@ sub render_element {
 
             $target_element->remove unless defined $value;
 
-            # attribute or HTML
-            if (defined $attribute) {
-
-                if ($attribute eq 'HTML') {
-                    $target_element->html($value);
-                }
-                else {
-                    $target_element->attr($attribute, $value);
-                }
-            }
-            # text node
-            else {
-                # printf STDERR "# is text: $value";
-                $target_element->text($value);
-            }
+            !defined $attribute  ? $target_element->text($value) :
+            $attribute eq 'HTML' ? $target_element->html($value)
+                                 : $target_element->attr($attribute, $value);
         }
 
         # ArrayRef
         elsif (ref $action eq 'ARRAY') {
 
-            $self->render_element($target_element, $action);
+            $self->render_directives($target_element, $action);
         }
 
         # HashRef
@@ -324,7 +312,7 @@ sub render_element {
                     };
 
                     my $tpl = $target_element->clone;
-                    $self->render_element($tpl, $new_directives);
+                    $self->render_directives($tpl, $new_directives);
                     $tpl->insert_before($target_element);
 
                     delete $self->data->{$self->loop_var};
@@ -336,7 +324,7 @@ sub render_element {
             else {
 
                 $self->_push_stack($new_data_root);
-                $self->render_element($target_element, $new_directives);
+                $self->render_directives($target_element, $new_directives);
                 $self->_pop_stack;
             }
         }
@@ -350,6 +338,7 @@ sub render_element {
         }
     }
 }
+
 
 
 
