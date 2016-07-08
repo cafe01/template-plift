@@ -62,6 +62,7 @@ $tpl->at('#name' => 'fullname')
     })
     ->at('article' => {
         'posts' => [
+            '.position' => 'loop.index',
             '.post-title' => 'title',
             '.post-link@href' => 'url',
             '.post-content@HTML' => 'content',
@@ -95,13 +96,14 @@ is $doc->find('#contact2 .email')->text, $data{contact}{email};
 # HashRef (loop)
 is $doc->find('article')->size, scalar @{$data{posts}};
 my $article = $doc->find('article')->first;
+is $article->find('.position')->text, 1;
 is $article->find('.post-title')->text, $data{posts}[0]{title};
 is $article->find('.post-link')->attr('href'), $data{posts}[0]{url};
 is $article->find('.post-content p')->text,
    (ref $article)->new($data{posts}[0]{content})->filter('p')->text;
 
-is $doc->find('article:first-child li.tag')->size, scalar @{$data{posts}[0]{tags}};
-is $doc->find('article:first-child li.tag:first-child a')->text, $data{posts}[0]{tags}[0]{name};
+is $article->find('li.tag')->size, scalar @{$data{posts}[0]{tags}};
+is $article->find('li.tag:first-child a')->text, $data{posts}[0]{tags}[0]{name};
 
 
 done_testing;

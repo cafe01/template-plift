@@ -7,6 +7,7 @@ use aliased 'XML::LibXML::jQuery';
 
 has 'template', is => 'ro', required => 1;
 has 'encoding', is => 'ro', default => 'UTF-8';
+has 'loop_var', is => 'ro', default => 'loop';
 has 'handlers', is => 'ro', default => sub { [] };
 has '_load_template', is => 'ro', required => 1, init_arg => 'load_template';
 
@@ -26,15 +27,15 @@ sub data {
     $stack->[-1];
 }
 
-# TODO evaluate if this data_stack thing isnt too much,
-# maybe just current_data_root ref is enough
-sub push_stack {
-    my ($self, $data) = @_;
+
+sub _push_stack {
+    my ($self, $data_point) = @_;
+    my $data = $self->get($data_point) || {};
     push @{$self->_data_stack}, $data;
     $self;
 }
 
-sub pop_stack {
+sub _pop_stack {
     my ($self) = @_;
     pop @{$self->_data_stack};
     $self;
@@ -272,7 +273,7 @@ sub render_element {
         if (!ref $action) {
 
 
-            my $value = $self->get($data_root ? "$data_root.$action" : $action);
+            my $value = $self->get($action);
             # printf STDERR "#\taction: $action -> $value\n";
 
             $target_element->remove unless defined $value;
@@ -305,26 +306,38 @@ sub render_element {
 
             my ($new_data_root, $new_directives) = %$action;
 
-            $new_data_root = "$data_root.$new_data_root"
-                if defined $data_root;
+            # $new_data_root = "$data_root.$new_data_root"
+            #     if defined $data_root;
 
             my $new_data = $self->get($new_data_root);
 
             # loop render
             if (defined $new_data && ref $new_data eq 'ARRAY') {
 
+                my $total = @$new_data;
                 for (my $i = 0; $i < @$new_data; $i++) {
 
+                    $self->_push_stack("$new_data_root.$i");
+                    $self->data->{$self->loop_var} = {
+                        index => $i+1,
+                        total => $total
+                    };
+
                     my $tpl = $target_element->clone;
-                    $self->render_element($tpl, $new_directives, "$new_data_root.$i");
+                    $self->render_element($tpl, $new_directives);
                     $tpl->insert_before($target_element);
+
+                    delete $self->data->{$self->loop_var};
+                    $self->_pop_stack;
                 }
 
                 $target_element->remove;
             }
             else {
 
-                $self->render_element($target_element, $new_directives, $new_data_root);
+                $self->_push_stack($new_data_root);
+                $self->render_element($target_element, $new_directives);
+                $self->_pop_stack;
             }
         }
 
