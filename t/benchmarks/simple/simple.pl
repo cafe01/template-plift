@@ -8,6 +8,7 @@ use Plift;
 use Template::Pure;
 use Path::Tiny;
 use Template;
+use XML::LibXML::jQuery;
 
 
 my $plift = Plift->new( path => ["$FindBin::Bin/plift"] );
@@ -18,18 +19,16 @@ my $tt = Template->new( INCLUDE_PATH => ["$FindBin::Bin/tt"] );
 # print "Pure:\n".pure();
 # print "TT:\n".tt(); exit;
 
+my @jquery_cache = map {$_->document->clone } jquery_parse_files();
+# say "@jquery_cache";
+
 cmpthese(shift || 5000, {
     Plift => \&plift,
-    'Template::Pure'  => \&pure,
+    # 'Template::Pure'  => \&pure,
     # 'Template::Toolkit'  => \&tt,
-    # load_files => sub {
-    #
-    #     my $file = path("$FindBin::Bin/pure/footer.html")->slurp_utf8;
-    #     $file = path("$FindBin::Bin/pure/header.html")->slurp_utf8;
-    #     $file = path("$FindBin::Bin/pure/layout.html")->slurp_utf8;
-    #     $file = path("$FindBin::Bin/pure/index.html")->slurp_utf8;
-    #
-    # }
+    # read_files => \&read_files,
+    jquery_parse_files => \&jquery_parse_files,
+    jquery_clone_nodes => \&jquery_clone_nodes,
 });
 
 
@@ -64,7 +63,6 @@ sub pure {
     });
 }
 
-
 sub tt {
 
     my $output = '';
@@ -73,4 +71,36 @@ sub tt {
         || die $tt->error();
 
     $output;
+}
+
+sub read_files {
+
+    my $file = path("$FindBin::Bin/pure/footer.html")->slurp_utf8;
+    $file = path("$FindBin::Bin/pure/header.html")->slurp_utf8;
+    $file = path("$FindBin::Bin/pure/layout.html")->slurp_utf8;
+    $file = path("$FindBin::Bin/pure/index.html")->slurp_utf8;
+}
+
+
+sub jquery_parse_files {
+
+    my @parsed = (
+        j(path("$FindBin::Bin/pure/footer.html")->slurp_utf8),
+        j(path("$FindBin::Bin/pure/header.html")->slurp_utf8),
+        j(path("$FindBin::Bin/pure/layout.html")->slurp_utf8),
+        j(path("$FindBin::Bin/pure/index.html")->slurp_utf8),
+    );
+}
+
+
+
+sub jquery_clone_nodes {
+    my @clones = map {
+        my $dom = $_->clone->contents;
+        $dom->append_to($dom->document);
+        $dom;
+
+    } @jquery_cache;
+
+
 }

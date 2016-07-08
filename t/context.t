@@ -15,16 +15,16 @@ subtest 'set()' => sub {
     my $now = DateTime->now;
 
     $ctx->set('name', 'Carlos Fernando')
-        ->set('now', $now, '.current-datetime')
+        ->set('now', $now)
         ->set({
             foo => 'foo value',
             bar => 'bar value',
-        }, { foo => '.foo', bar => '.bar' })
+        })
         ->set('items', [
             { name => 'Item 1', description => 'Item 1 description' },
             { name => 'Item 2', description => 'Item 2 description' },
             { name => 'Item 3', description => 'Item 3 description' },
-        ], { name => '.name', description => '.description' });
+        ]);
 
     is_deeply $ctx->data, {
         name => 'Carlos Fernando',
@@ -37,13 +37,6 @@ subtest 'set()' => sub {
             { name => 'Item 3', description => 'Item 3 description' },
         ]
     }, 'data';
-
-    is_deeply $ctx->schema, {
-        now => '.current-datetime',
-        foo => '.foo',
-        bar => '.bar',
-        items => { name => '.name', description => '.description' }
-    }, 'schema';
 };
 
 

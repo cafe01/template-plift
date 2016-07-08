@@ -15,8 +15,8 @@ has 'document', is => 'rw';
 has 'relative_path_prefix', is => 'rw', init_arg => undef;
 has 'is_rendering', is => 'rw', init_arg => undef, default => 0;
 
-has 'schema', is => 'ro', default => sub { {} };
 has '_data_stack',   is => 'ro', default => sub { [] };
+has 'directives',   is => 'ro', default => sub { [] };
 
 
 sub data {
@@ -26,6 +26,40 @@ sub data {
     $stack->[-1];
 }
 
+# TODO evaluate if this data_stack thing isnt too much,
+# maybe just current_data_root ref is enough
+sub push_stack {
+    my ($self, $data) = @_;
+    push @{$self->_data_stack}, $data;
+    $self;
+}
+
+sub pop_stack {
+    my ($self) = @_;
+    pop @{$self->_data_stack};
+    $self;
+}
+
+
+sub at {
+    my $self = shift;
+
+    if (my $reftype = ref $_[0]) {
+
+        push @{$self->directives}, @$_[0]
+            if $reftype eq 'ARRAY';
+
+        push @{$self->directives}, %$_[0]
+            if $reftype eq 'HASH';
+    }
+    else {
+        push @{$self->directives}, @_;
+    }
+
+    $self;
+}
+
+
 
 sub set {
     my $self = shift;
@@ -34,37 +68,22 @@ sub set {
         unless defined $_[0];
 
     my $data   = $self->data;
-    my $schema = $self->schema;
 
     # set(hashref)
-    # set(hashref, schema)
     if (my $reftype = ref $_[0]) {
 
-        confess "Invalid parameter given to set(data[, schema]): data must be a hashref."
+        confess "Invalid parameter given to set(data): data must be a hashref."
             unless $reftype eq 'HASH';
 
         # copy data
         $data->{$_} = $_[0]->{$_}
             for keys %{$_[0]};
 
-        # copy schema
-        if (@_ == 2) {
-
-            confess "Invalid parameter given to set(data, schema): schema must be a hashref."
-                unless ref $_[1] eq 'HASH';
-
-            $schema->{$_} = $_[1]->{$_}
-                for keys %{$_[1]};
-        }
-
         return $self;
     }
 
-    # set(key, value, schema)
+    # set(key, value)
     $data->{$_[0]} = $_[1];
-
-    $schema->{$_[0]} = $_[2]
-        if defined $_[2];
 
     $self;
 }
@@ -74,7 +93,6 @@ sub get {
     my ($self, $reference) = @_;
 
     my $data = $self->data;
-    my $schema = $self->schema;
     my @keys = split /\./, $reference;
 
     # empty key
@@ -101,9 +119,6 @@ sub get {
         # append path
         $current_path .= length $current_path ? ".$key" : $key;
 
-        # traverse schema
-        $schema = defined $schema && ref $schema eq 'HASH' ? $schema->{$key} : undef;
-
         my $next_data;
 
         # hash key
@@ -115,7 +130,7 @@ sub get {
         # array: numeric keys only
         elsif (ref $data eq 'ARRAY') {
 
-            die "get('$reference') error: '$current_path' is an array and '$key' is not a numeric index."
+            confess "get('$reference') error: '$current_path' is an array and '$key' is not a numeric index."
                 unless $key =~ /^\-?\d+$/;
 
             $next_data = $data->[$key];
@@ -143,7 +158,7 @@ sub get {
     }
 
     $data = '' unless defined $data;
-    return wantarray ? ($data, $schema) : $data;
+    return $data;
 }
 
 
@@ -228,18 +243,100 @@ sub render  {
 
     $self->is_rendering(1);
 
-    # load tempalte file
-    my $element = $self->load_template($self->template);
+    # process tempalte file
+    my $element = $self->process_template($self->template);
 
-    # process element
-    $self->process_element($element);
+    # render data
+    $self->render_element($element, $self->directives);
 
     # TODO output filters
 
     # return the document
+    $self->is_rendering(0);
     $element->document
 }
 
+sub render_element {
+    my ($self, $el, $directives, $data_root) = @_;
+
+    for (my $i = 0; $i < @$directives; $i += 2) {
+
+        my ($selector, $attribute) = split '@', $directives->[$i];
+        my $action = $directives->[$i+1];
+
+        # printf STDERR "# directive: $selector\n";
+        my $target_element = $el->find($selector);
+        next unless $target_element->size > 0;
+
+        # Scalar
+        if (!ref $action) {
+
+
+            my $value = $self->get($data_root ? "$data_root.$action" : $action);
+            # printf STDERR "#\taction: $action -> $value\n";
+
+            $target_element->remove unless defined $value;
+
+            # attribute or HTML
+            if (defined $attribute) {
+
+                if ($attribute eq 'HTML') {
+                    $target_element->html($value);
+                }
+                else {
+                    $target_element->attr($attribute, $value);
+                }
+            }
+            # text node
+            else {
+                # printf STDERR "# is text: $value";
+                $target_element->text($value);
+            }
+        }
+
+        # ArrayRef
+        elsif (ref $action eq 'ARRAY') {
+
+            $self->render_element($target_element, $action);
+        }
+
+        # HashRef
+        elsif (ref $action eq 'HASH') {
+
+            my ($new_data_root, $new_directives) = %$action;
+
+            $new_data_root = "$data_root.$new_data_root"
+                if defined $data_root;
+
+            my $new_data = $self->get($new_data_root);
+
+            # loop render
+            if (defined $new_data && ref $new_data eq 'ARRAY') {
+
+                for (my $i = 0; $i < @$new_data; $i++) {
+
+                    my $tpl = $target_element->clone;
+                    $self->render_element($tpl, $new_directives, "$new_data_root.$i");
+                    $tpl->insert_before($target_element);
+                }
+
+                $target_element->remove;
+            }
+            else {
+
+                $self->render_element($target_element, $new_directives, $new_data_root);
+            }
+        }
+
+        # CodeRef
+        elsif (ref $action eq 'CODE') {
+            # Template::Pure used this coderef to receive a value.
+            # our coderef is used to perform custom element rendering,
+            # We support evaluating a value from a coderef when a datapoint is a coderef.
+            $action->($target_element, $self);
+        }
+    }
+}
 
 
 
