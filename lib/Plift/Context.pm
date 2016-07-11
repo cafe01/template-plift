@@ -124,10 +124,10 @@ sub at {
     my $directives = $self->directives->{directives};
     if (my $reftype = ref $_[0]) {
 
-        push @$directives, @$_[0]
+        push @$directives, @{$_[0]}
             if $reftype eq 'ARRAY';
 
-        push @$directives, %$_[0]
+        push @$directives, %{$_[0]}
             if $reftype eq 'HASH';
     }
     else {
