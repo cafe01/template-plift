@@ -286,7 +286,7 @@ __END__
 
 =head1 NAME
 
-Plift - It's new $module
+Plift - Designer friendly, safe, extensible HTML template engine.
 
 =head1 SYNOPSIS
 
