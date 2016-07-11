@@ -2,5 +2,9 @@ Revision history for Perl extension Plift
 
 {{$NEXT}}
 
-    - original version
-
+    - first released version, includes all basic features:
+      - include and wrap templates
+      - render data via pre-defined directives
+      - render data via references found in templates
+      - load plugins
+      - add custom handlers

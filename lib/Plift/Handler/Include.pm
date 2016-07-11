@@ -55,11 +55,8 @@ sub include {
             qw/ data-plift-include data-if data-unless if unless/;
     }
 
-    # printf STDERR "# include: $template_name\n";
     my $dom = $ctx->process_template( $template_name );
 
-    # printf STDERR "# indcluded DOM: %s\n", $dom->as_html;
-    # $ctx->process_element($dom);
     # replace or append
     if ($is_tag) {
         $element->replace_with($dom);

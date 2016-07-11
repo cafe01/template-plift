@@ -8,6 +8,7 @@ use Plift;
 use Template::Pure;
 use Path::Tiny;
 use Template;
+use HTML::Template;
 use XML::LibXML::jQuery;
 
 
@@ -15,20 +16,23 @@ my $plift = Plift->new( path => ["$FindBin::Bin/plift"] );
 my $tt = Template->new( INCLUDE_PATH => ["$FindBin::Bin/tt"] );
 
 
+
 # print "Plift:\n".plift().plift(); exit;
 # print "Pure:\n".pure();
 # print "TT:\n".tt(); exit;
+# print "HTML::Template:\n".html_template(); exit;
 
 my @jquery_cache = map {$_->document->clone } jquery_parse_files();
 # say "@jquery_cache";
 
 cmpthese(shift || 5000, {
     Plift => \&plift,
+    'HTML::Template'  => \&html_template,
     # 'Template::Pure'  => \&pure,
     # 'Template::Toolkit'  => \&tt,
     # read_files => \&read_files,
-    jquery_parse_files => \&jquery_parse_files,
-    jquery_clone_nodes => \&jquery_clone_nodes,
+    # jquery_parse_files => \&jquery_parse_files,
+    # jquery_clone_nodes => \&jquery_clone_nodes,
 });
 
 
@@ -36,6 +40,13 @@ cmpthese(shift || 5000, {
 sub plift {
     my $output = $plift->process("index")->as_html;
 }
+
+sub html_template {
+
+    my $html_template = HTML::Template->new( path => ["$FindBin::Bin/html_template"], filename => 'layout.html' );
+    my $output = $html_template->output;
+}
+
 
 sub pure {
 
