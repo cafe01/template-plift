@@ -52,6 +52,17 @@
       }
    },
    "release_status" : "unstable",
+   "resources" : {
+      "bugtracker" : {
+         "web" : "https://github.com/cafe01/template-plift/issues"
+      },
+      "homepage" : "https://github.com/cafe01/template-plift",
+      "repository" : {
+         "type" : "git",
+         "url" : "git://github.com/cafe01/template-plift.git",
+         "web" : "https://github.com/cafe01/template-plift"
+      }
+   },
    "version" : "0.01",
    "x_authority" : "cpan:CAFEGRATZ"
 }
