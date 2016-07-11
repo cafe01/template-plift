@@ -3,8 +3,7 @@ package Plift::Context;
 use Moo;
 use Carp;
 use Scalar::Util qw/ blessed /;
-use aliased 'XML::LibXML::jQuery';
-use Data::Printer;
+use XML::LibXML::jQuery;
 
 has 'template', is => 'ro', required => 1;
 has 'encoding', is => 'ro', default => 'UTF-8';
@@ -277,7 +276,7 @@ sub process_element {
 sub dispatch_handlers {
     my ($self, $i, $node) = @_;
     my $tagname = $node->localname;
-    my $el = jQuery->new($node);
+    my $el = XML::LibXML::jQuery->new($node);
 
     # printf STDERR "# el($i): %s\n", $el->as_html;
 

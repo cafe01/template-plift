@@ -4,3 +4,8 @@ on 'test' => sub {
     requires 'Test::More', '0.98';
 };
 
+requires 'Moo';
+requires 'Class::Load';
+requires 'Path::Tiny';
+requires 'Scalar::Util';
+requires 'XML::LibXML::jQuery';
