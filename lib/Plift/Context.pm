@@ -4,11 +4,13 @@ use Moo;
 use Carp;
 use Scalar::Util qw/ blessed /;
 use aliased 'XML::LibXML::jQuery';
+use Data::Printer;
 
 has 'template', is => 'ro', required => 1;
 has 'encoding', is => 'ro', default => 'UTF-8';
 has 'loop_var', is => 'ro', default => 'loop';
 has 'handlers', is => 'ro', default => sub { [] };
+has 'internal_id_attribute', is => 'ro', default => 'data-plift-id';
 has '_load_template', is => 'ro', required => 1, init_arg => 'load_template';
 
 
@@ -17,7 +19,8 @@ has 'relative_path_prefix', is => 'rw', init_arg => undef;
 has 'is_rendering', is => 'rw', init_arg => undef, default => 0;
 
 has '_data_stack',   is => 'ro', default => sub { [] };
-has 'directives',   is => 'ro', default => sub { [] };
+has '_directive_stack',   is => 'ro', default => sub { [] };
+
 
 
 sub data {
@@ -26,7 +29,6 @@ sub data {
     push @$stack, +{} if @$stack == 0;
     $stack->[-1];
 }
-
 
 sub _push_stack {
     my ($self, $data_point) = @_;
@@ -41,20 +43,96 @@ sub _pop_stack {
     $self;
 }
 
+sub directives {
+    my $self = shift;
+    my $stack = $self->_directive_stack;
+    push @$stack, +{
+        directives => [],
+        selector => '',
+    } if @$stack == 0;
+    $stack->[-1];
+}
+
+sub rewind_directive_stack {
+    my ($self, $element) = @_;
+
+    # rewind all
+    unless (defined $element) {
+
+        my $directive_stack = $self->_directive_stack;
+        pop @$directive_stack while (@$directive_stack > 1);
+        return;
+    }
+
+    # rewind until parent is found
+    # pop stack until we find a parent or reach the root of stack
+    my $stack = $self->_directive_stack;
+    while (@$stack > 1) {
+
+        my $parent = $element->parent;
+        my $parent_selector = $stack->[-1]->{selector};
+
+        while ($parent->get(0)->nodeType != 9) {
+
+            return if $parent->filter($parent_selector)->size == 1;
+
+            $parent = $parent->parent;
+        }
+
+        pop @$stack;
+    }
+}
+
+sub push_at {
+    my ($self, $selector, $data_point) = @_;
+
+    my $inner_directives = [];
+    $self->at($selector => { $data_point => $inner_directives });
+    push @{$self->_directive_stack}, {
+        selector   => $selector,
+        directives => $inner_directives
+    };
+
+    # p $self->_directive_stack;
+
+    $self;
+}
+
+sub pop_at {
+    my $self = shift;
+    pop @{$self->_directive_stack};
+    $self;
+}
+
+
+
+my $internal_id = 1;
+sub internal_id {
+    my ($self, $node) = @_;
+
+    unless ($node->hasAttribute($self->internal_id_attribute)) {
+        $node->setAttribute($self->internal_id_attribute, $internal_id++);
+    }
+
+    return $node->getAttribute($self->internal_id_attribute);
+}
+
+
+
 
 sub at {
     my $self = shift;
-
+    my $directives = $self->directives->{directives};
     if (my $reftype = ref $_[0]) {
 
-        push @{$self->directives}, @$_[0]
+        push @$directives, @$_[0]
             if $reftype eq 'ARRAY';
 
-        push @{$self->directives}, %$_[0]
+        push @$directives, %$_[0]
             if $reftype eq 'HASH';
     }
     else {
-        push @{$self->directives}, @_;
+        push @$directives, @_;
     }
 
     $self;
@@ -181,56 +259,57 @@ sub load_template {
 
 sub process_element {
     my ($self, $element) = @_;
-    my $handlers = $self->handlers;
 
     # match elements
     my $callback = sub {
+        $self->dispatch_handlers(@_);
+    };
 
-        my ($i, $el) = @_;
-        $el = jQuery->new($el);
-        my $tagname = $el->tagname;
+    # xpath
+    my $find_xpath = join ' | ', map { $_->{xpath} } @{ $self->handlers };
+    my $filter_xpath = $find_xpath;
+    $filter_xpath =~ s{\.//}{./}g;
 
-        # printf STDERR "# el($i): %s\n", $el->as_html;
+    $element->xfilter($filter_xpath)->each($callback);
+    $element->xfind($find_xpath)->each($callback);
+}
 
-        foreach my $handler (@$handlers) {
+sub dispatch_handlers {
+    my ($self, $i, $node) = @_;
+    my $tagname = $node->localname;
+    my $el = jQuery->new($node);
 
-            # dispatch by tagname
-            if ($handler->{tag} && scalar grep { $_ eq $tagname } @{$handler->{tag}}) {
+    # printf STDERR "# el($i): %s\n", $el->as_html;
 
-                # printf STDERR "# dispatching: <%s /> -> '%s'\n", $tagname, $handler->{name};
-                $handler->{sub}->($el, $self);
+    foreach my $handler (@{ $self->handlers }) {
 
-            }
+        # dispatch by tagname
+        my $handler_match = 0;
+        if ($handler->{tag} && scalar grep { $_ eq $tagname } @{$handler->{tag}}) {
 
-            # dispatch by attribute
-            elsif ($handler->{attribute}) {
+            $handler_match = 1;
+        }
 
-                foreach my $attr (@{$handler->{attribute}}) {
+        # dispatch by attribute
+        elsif ($handler->{attribute}) {
 
-                    if ($el->get(0)->hasAttribute($attr)) {
+            foreach my $attr (@{$handler->{attribute}}) {
 
-                        # printf STDERR '# dispatching: <%s %s="%s" /> -> "%s"'."\n",
-                            # $tagname, $attr, $el->attr($attr), $handler->{name};
+                if ($node->hasAttribute($attr)) {
 
-                        $handler->{sub}->($el, $self);
-                    }
-
+                    $handler_match = 1;
+                    last;
                 }
             }
         }
 
-    };
-
-    # xpath
-    my $find_xpath = join ' | ', map { $_->{xpath} } @$handlers;
-    my $filter_xpath = $find_xpath;
-    $filter_xpath =~ s{\.//}{./}g;
-    # printf STDERR "# process_element(%s): \n%s\n", $find_xpath, $element->as_html;
-    # printf STDERR "# process_element(%s): %s\n", $find_xpath, $filter_xpath;
-    $element->xfilter($filter_xpath)->each($callback);
-    $element->xfind($find_xpath)->each($callback);
-
+        # dispatch
+        # printf STDERR "# dispatching: <%s /> -> '%s'\n", $tagname, $handler->{name};
+        $handler->{sub}->($el, $self)
+            if $handler_match;
+    }
 }
+
 
 sub render  {
     my ($self, $data) = @_;
@@ -247,14 +326,19 @@ sub render  {
     # process tempalte file
     my $element = $self->process_template($self->template);
 
-    # render data
-    $self->render_directives($element, $self->directives);
+    # rewind directive stack, then render
+    $self->rewind_directive_stack;
+    $self->render_directives($element, $self->directives->{directives});
 
     # TODO output filters
 
+    # remove internal id attribute
+    $element->xfind(sprintf '//*[@%s]', $self->internal_id_attribute)
+            ->remove_attr($self->internal_id_attribute);
+
     # return the document
     $self->is_rendering(0);
-    $element->document
+    $element->document;
 }
 
 sub render_directives {
@@ -338,7 +422,6 @@ sub render_directives {
         }
     }
 }
-
 
 
 

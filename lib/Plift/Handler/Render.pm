@@ -8,56 +8,52 @@ sub register {
     my ($self, $engine) = @_;
 
     $engine->add_handler({
-        name      => 'render_data',
+        name      => 'render',
         # tag       => 'x-render',
-        attribute => 'data-render',
-        handler   => sub {
-
-            $self->process(@_);
-        }
-    })
+        attribute => ['data-render'],
+        handler   => \&create_directives
+    });
 }
 
 
-sub process {
-    my ($self, $element, $ctx) = @_;
+sub create_directives {
+    my ($element, $ctx) = @_;
+    my $node = $element->get(0);
 
-    my @datapoints = map { [split '@', $_] }
-                     split /\s+/, $element->attr('data-render');
+    # walk directive stack, get node id
+    $ctx->rewind_directive_stack($element);
 
-    $element->remove_attr('data-render');
+    # parse directive
+    my $render_instruction = $node->getAttribute('data-render');
+    $node->removeAttribute('data-render');
 
-    foreach my $item (@datapoints) {
+    # prepare selector
+    my $internal_id = $ctx->internal_id($element->get(0));
+    my $selector = sprintf '*[%s="%s"]', $ctx->internal_id_attribute, $internal_id;
 
-        my ($data_point, $attribute) = @$item;
-        my $data = $ctx->get($data_point);
+    # data-render="[datapoint]" (step into directive)
+    if ($render_instruction =~ /^\s*\[\s*([\w._-]+)\s*\]\s*$/) {
 
-        next unless defined $data;
-
-        # Scalar
-        unless (ref $data) {
-
-            # printf STDERR "# render: %s -> %s\n", $data_point, $data;
-            !defined $attribute  ? $element->text($data) :
-            $attribute eq 'HTML' ? $element->html($data)
-                                 : $element->attr($attribute, $data);
-        }
-        else {
-
-            if (ref $data eq 'ARRAY') {
-
-            }
-            else {
-
-
-            }
-        }
+        # push directive stack
+        $ctx->push_at($selector, $1);
     }
 
+    # data-render="datapoint"
+    else {
 
+        my @data_points = map { [split '@', $_] }
+                          split /\s+/, $render_instruction;
 
+        foreach my $item (@data_points) {
 
+            my ($data_point, $attribute) = @$item;
+            $ctx->at(defined $attribute ? "$selector\@$attribute" : $selector, $data_point);
+       }
+    }
 }
+
+
+
 
 
 

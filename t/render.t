@@ -46,6 +46,7 @@ test_render_directives();
 test_render_references();
 done_testing;
 
+
 sub test_render_directives {
 
     my $tpl = $engine->template('render');
@@ -114,10 +115,31 @@ sub test_render_directives {
 
 sub test_render_references {
     my $tpl = $engine->template('render-tpl-refs');
+
+    is_deeply $tpl->directives->{directives}, [];
     my $doc = $tpl->render(\%data);
 
-    note $doc->as_html;
+    # note $doc->as_html;
 
     is $doc->find('#name')->text, $data{fullname};
     is $doc->find('#name')->attr('title'), $data{fullname};
+
+    is $doc->find('#contact .phone')->text, $data{contact}{phone};
+    is $doc->find('#contact .email')->text, $data{contact}{email};
+
+    # inner context
+    is $doc->find('#contact2 .phone')->text, $data{contact}{phone};
+    is $doc->find('#contact2 .email')->text, $data{contact}{email};
+
+    # (loop)
+    is $doc->find('article')->size, scalar @{$data{posts}};
+    my $article = $doc->find('article')->first;
+    is $article->find('.position')->text, 1;
+    is $article->find('.post-title')->text, $data{posts}[0]{title};
+    is $article->find('.post-link')->attr('href'), $data{posts}[0]{url};
+    is $article->find('.post-content p')->text,
+       (ref $article)->new($data{posts}[0]{content})->filter('p')->text;
+
+    is $article->find('li.tag')->size, scalar @{$data{posts}[0]{tags}};
+    is $article->find('li.tag:first-child a')->text, $data{posts}[0]{tags}[0]{name};
 }
