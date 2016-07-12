@@ -86,10 +86,23 @@ sub wrap {
 
 1;
 
+__END__
+
 =encoding utf-8
 
 =head1 NAME
 
 Plift::Handler::Wrap - Wrap with other template file.
+
+=head1 LICENSE
+
+Copyright (C) Carlos Fernando Avila Gratz.
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
+
+=head1 AUTHOR
+
+Carlos Fernando Avila Gratz E<lt>cafe@kreato.com.brE<gt>
 
 =cut

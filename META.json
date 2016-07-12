@@ -1,5 +1,5 @@
 {
-   "abstract" : "It's new $module",
+   "abstract" : "Designer friendly, safe, extensible HTML template engine.",
    "author" : [
       "Carlos Fernando Avila Gratz <cafe@kreato.com.br>"
    ],
@@ -42,6 +42,11 @@
       },
       "runtime" : {
          "requires" : {
+            "Class::Load" : "0",
+            "Moo" : "0",
+            "Path::Tiny" : "0",
+            "Scalar::Util" : "0",
+            "XML::LibXML::jQuery" : "0",
             "perl" : "5.008001"
          }
       },

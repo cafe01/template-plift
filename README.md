@@ -1,6 +1,7 @@
+[![Build Status](https://travis-ci.org/cafe01/template-plift.svg?branch=master)](https://travis-ci.org/cafe01/template-plift)
 # NAME
 
-Plift - It's new $module
+Plift - Designer friendly, safe, extensible HTML template engine.
 
 # SYNOPSIS
 
@@ -159,7 +160,22 @@ A new context is created via  ["template"](#template), rendering directives are 
 
     my $document = $plift->process('index', $data, $directives);
 
-# THE PAPER
+# SIMILAR PROJECTS
+
+This is a list of modules (that I know of) that pursue similar goals:
+
+- [HTML::Template](https://metacpan.org/pod/HTML::Template)
+
+    Probably one of the first to use (almost) valid html files as templates, and
+    encourage less business logic to be embedded in the templates.
+
+- [Template::Pure](https://metacpan.org/pod/Template::Pure)
+
+    Perl reimplementation of Pure.js. This module inspired Plift's render directives.
+
+- [Template::Semantic](https://metacpan.org/pod/Template::Semantic)
+
+    Similar to Template::Pure, but mixes data with render directives.
 
 # LICENSE
 

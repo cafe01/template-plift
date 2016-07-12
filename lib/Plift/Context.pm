@@ -261,7 +261,7 @@ sub process_element {
 
     # match elements
     my $callback = sub {
-        $self->dispatch_handlers(@_);
+        $self->_dispatch_handlers(@_);
     };
 
     # xpath
@@ -273,7 +273,7 @@ sub process_element {
     $element->xfind($find_xpath)->each($callback);
 }
 
-sub dispatch_handlers {
+sub _dispatch_handlers {
     my ($self, $i, $node) = @_;
     my $tagname = $node->localname;
     my $el = XML::LibXML::jQuery->new($node);
@@ -327,7 +327,7 @@ sub render  {
 
     # rewind directive stack, then render
     $self->rewind_directive_stack;
-    $self->render_directives($element, $self->directives->{directives});
+    $self->_render_directives($element, $self->directives->{directives});
 
     # TODO output filters
 
@@ -340,7 +340,7 @@ sub render  {
     $element->document;
 }
 
-sub render_directives {
+sub _render_directives {
     my ($self, $el, $directives) = @_;
 
     for (my $i = 0; $i < @$directives; $i += 2) {
@@ -369,7 +369,7 @@ sub render_directives {
         # ArrayRef
         elsif (ref $action eq 'ARRAY') {
 
-            $self->render_directives($target_element, $action);
+            $self->_render_directives($target_element, $action);
         }
 
         # HashRef
@@ -395,7 +395,7 @@ sub render_directives {
                     };
 
                     my $tpl = $target_element->clone;
-                    $self->render_directives($tpl, $new_directives);
+                    $self->_render_directives($tpl, $new_directives);
                     $tpl->insert_before($target_element);
 
                     delete $self->data->{$self->loop_var};
@@ -407,7 +407,7 @@ sub render_directives {
             else {
 
                 $self->_push_stack($new_data_root);
-                $self->render_directives($target_element, $new_directives);
+                $self->_render_directives($target_element, $new_directives);
                 $self->_pop_stack;
             }
         }
@@ -428,14 +428,84 @@ sub render_directives {
 
 
 1;
-
-
 __END__
 
-=head1 METHOD
+=encoding utf-8
 
-=head2 reset
+=head1 NAME
 
-Resets the data and schema.
+Plift::Context - Template data and instructions to be rendered.
+
+=head1 SYNOPSIS
+
+
+    use Plift;
+
+    my $plift = Plift->new(
+        path    => \@paths,                               # default ['.']
+        plugins => [qw/ Script Blog Gallery GoogleMap /], # plugins not included
+    );
+
+    my $tpl = $plift->template("index");
+
+    # set render directives
+    $tpl->at({
+        '#name' => 'fullname',
+        '#contact' => [
+            '.phone' => 'contact.phone',
+            '.email' => 'contact.email'
+        ]
+    });
+
+    # render render with data
+    my $document = $tpl->render({
+
+        fullname => 'Carlos Fernando Avila Gratz',
+        contact => {
+            phone => '+55 27 1234-5678',
+            email => 'cafe@example.com'
+        }
+    });
+
+=head1 METHODS
+
+=head2 at
+
+Adds on or more render directives.
+
+=head2 set
+
+Set data to be rendered.
+
+=head2 get
+
+Get data via a dotted data-point string.
+
+    $context->set(posts => [
+        { title => 'Post 01',  ... },
+        { title => 'Post 02',  ... },
+        { title => 'Post 03',  ... },
+        ...
+    ]);
+
+    print $context->get('posts.0.title'); # Post 01
+
+=head2 render
+
+Renders the template. Returns a XML::LibXML::jQuery object containing the
+XML::LibXML::Document node.
+
+    print $context->render(\%data)->as_html;
+
+=head1 LICENSE
+
+Copyright (C) Carlos Fernando Avila Gratz.
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
+
+=head1 AUTHOR
+
+Carlos Fernando Avila Gratz E<lt>cafe@kreato.com.brE<gt>
 
 =cut

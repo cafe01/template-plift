@@ -465,7 +465,26 @@ L<Plift::Context/at> and finally the template is rendered via L<Plift::Context/r
     my $document = $plift->process('index', $data, $directives);
 
 
-=head1 THE PAPER
+=head1 SIMILAR PROJECTS
+
+This is a list of modules (that I know of) that pursue similar goals:
+
+=over
+
+=item L<HTML::Template>
+
+Probably one of the first to use (almost) valid html files as templates, and
+encourage less business logic to be embedded in the templates.
+
+=item L<Template::Pure>
+
+Perl reimplementation of Pure.js. This module inspired Plift's render directives.
+
+=item L<Template::Semantic>
+
+Similar to Template::Pure, but mixes data with render directives.
+
+=back
 
 =head1 LICENSE
 

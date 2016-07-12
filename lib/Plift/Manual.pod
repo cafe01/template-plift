@@ -9,19 +9,19 @@ application to a multi-valued data.
 
 In addition to that, Plift also provides a mechanism to remove template elements
 based upon presence/absence of a boolean data. Any other custom processing must
-be implemented via a L</"CUSTOM INSTRUCTION">.
+be implemented via a L</"CUSTOM HANDLER">.
 
 
 =head2 DATA INTERPOLATION
 
-Almost any type of data can be made available to the template via L</bind_attr>.
+Almost any type of data can be made available to the template via L</Plift::Context/set>.
 Plift will try to render the best string representation for the each type of data.
-Templates references data via the special HTML attribute C< data-render="foo" > or
+Templates can reference data via the special HTML attribute C< data-render="foo" > or
 HTML element C<< <render data="foo"> >>.
 
 Consider the following data:
 
-    $plift->bind_attr(
+    $tempalte->set(
         name => 'Carlos Fernando',
         now  => DateTime->now,
         is_admin => 1,
@@ -85,4 +85,4 @@ produces:
 
 =head2 ATTRIBUTE REFERENCE
 
-=head1 CUSTOM RENDERER
+=head1 CUSTOM HANDLER
