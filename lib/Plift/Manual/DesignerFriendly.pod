@@ -1,0 +1,13 @@
+__END__
+
+=pod
+
+
+When your application templates are just pure HTML5 files, it becomes easy for
+the front-end developers to work with almost no coordination with the backend team.
+Even if you buy a "website theme" from one of those online markets, which of
+course wasn't developed to your application, is very easy to slice it into
+'layout', 'header', 'footer' and 'content' tempalte files.
+
+
+=cut

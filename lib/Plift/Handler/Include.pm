@@ -10,16 +10,13 @@ sub register {
         name      => 'include',
         tag       => 'x-include',
         attribute => 'data-plift-include',
-        handler   => sub {
-
-            $self->include(@_);
-        }
+        handler   => \&include
     })
 }
 
 
 sub include {
-    my ($self, $element, $ctx) = @_;
+    my ($element, $ctx) = @_;
 
     my $is_tag = $element->tagname eq 'x-include';
     my $template_name = $is_tag ? $element->attr('template')

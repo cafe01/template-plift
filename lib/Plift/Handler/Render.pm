@@ -9,7 +9,7 @@ sub register {
 
     $engine->add_handler({
         name      => 'render',
-        # tag       => 'x-render',
+        tag       => 'x-render',
         attribute => ['data-render'],
         handler   => \&create_directives
     });
@@ -24,8 +24,9 @@ sub create_directives {
     $ctx->rewind_directive_stack($element);
 
     # parse directive
-    my $render_instruction = $node->getAttribute('data-render');
-    $node->removeAttribute('data-render');
+    my $is_tag = $node->localname eq 'x-render';
+    my $render_instruction = $node->getAttribute($is_tag ? 'data' : 'data-render');
+    $node->removeAttribute('data-render') unless $is_tag;
 
     # prepare selector
     my $internal_id = $ctx->internal_id($element->get(0));
