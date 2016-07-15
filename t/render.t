@@ -1,4 +1,5 @@
 use strict;
+use warnings;
 use Test::More 0.98;
 use FindBin;
 use Plift;
@@ -14,7 +15,7 @@ my @tags = (
 );
 
 my %data = (
-    fullname => 'Carlos Fernando Avila Gratz',
+    fullname => '<b>Carlos Fernando Avila Gratz</b>',
     contact => {
         phone => 123,
         email => 'foo@example'
@@ -44,6 +45,7 @@ my %data = (
 
 test_render_directives();
 test_render_references();
+test_render_reference_tags();
 done_testing;
 
 
@@ -135,6 +137,37 @@ sub test_render_references {
 
     is $doc->find('#name')->text, $data{fullname};
     is $doc->find('#name')->attr('title'), $data{fullname};
+
+    is $doc->find('#contact .phone')->text, $data{contact}{phone};
+    is $doc->find('#contact .email')->text, $data{contact}{email};
+
+    # inner context
+    is $doc->find('#contact2 .phone')->text, $data{contact}{phone};
+    is $doc->find('#contact2 .email')->text, $data{contact}{email};
+
+    # (loop)
+    is $doc->find('article')->size, scalar @{$data{posts}};
+    my $article = $doc->find('article')->first;
+    is $article->find('.position')->text, 1;
+    is $article->find('.post-title')->text, $data{posts}[0]{title};
+    is $article->find('.post-link')->attr('href'), $data{posts}[0]{url};
+    is $article->find('.post-content p')->text,
+       (ref $article)->new($data{posts}[0]{content})->filter('p')->text;
+
+    is $article->find('li.tag')->size, scalar @{$data{posts}[0]{tags}};
+    is $article->find('li.tag:first-child a')->text, $data{posts}[0]{tags}[0]{name};
+}
+
+sub test_render_reference_tags {
+    my $tpl = $engine->template('render-tpl-ref-tag');
+
+    is_deeply $tpl->directives->{directives}, [];
+    my $doc = $tpl->render(\%data);
+
+    note $doc->as_html;
+
+    is $doc->find('x-render')->size, 0;
+    is $doc->find('#name')->text, "Hello $data{fullname}";
 
     is $doc->find('#contact .phone')->text, $data{contact}{phone};
     is $doc->find('#contact .email')->text, $data{contact}{email};

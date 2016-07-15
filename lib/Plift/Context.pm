@@ -71,6 +71,12 @@ sub rewind_directive_stack {
         my $parent = $element->parent;
         my $parent_selector = $stack->[-1]->{selector};
 
+        # remove modifiers
+        # printf STDERR "# SEL BEF: $parent_selector\n";
+        $self->_parse_matchspec_modifiers($parent_selector);
+        # printf STDERR "# SEL AFT: $parent_selector\n";
+        # printf STDERR "# SEL AFT: $stack->[-1]->{selector}\n";
+
         while ($parent->get(0)->nodeType != 9) {
 
             return if $parent->filter($parent_selector)->size == 1;
@@ -348,26 +354,11 @@ sub _render_directives {
         my $match_spec = $directives->[$i];
 
         # modifiers
-        my %mod;
-
-        # ^<match_spec>
-        $mod{replace} = $match_spec =~ /^\+?\^\+?/;
-
-        # +<match_spec>
-        $mod{prepend} = $match_spec =~ /^\^?\+\^?/;
-
-        # <match_spec>+
-        $mod{append} = $match_spec =~ /\+$/;
-
-        # remove modifier characters
-        $match_spec =~ s/^[+^]+(?=[\w\.\#])//g;
-        $match_spec =~ s/(?<=[\w\.\#])[+^]+$//g;
-        # printf STDERR "# ms: $match_spec\n";
+        my $mod = $self->_parse_matchspec_modifiers($match_spec);
 
         my ($selector, $attribute) = split '@', $match_spec;
         my $action = $directives->[$i+1];
 
-        # printf STDERR "# directive: $selector\n";
         my $target_element = $el->find($selector);
         next unless $target_element->size > 0;
 
@@ -391,15 +382,11 @@ sub _render_directives {
 
                 # replace contents by default
                 $target_element->contents->remove
-                    unless $mod{prepend} || $mod{append};
+                    unless $mod->{prepend} || $mod->{append};
 
-                $mod{prepend} ? $target_element->prepend($value)
+                $mod->{prepend} ? $target_element->prepend($value)
                               : $target_element->append($value);
             }
-
-            # replace
-            $target_element->replace_with($target_element->contents)
-                if $mod{replace};
         }
 
         # ArrayRef
@@ -422,6 +409,9 @@ sub _render_directives {
             if (defined $new_data && ref $new_data eq 'ARRAY') {
 
                 my $total = @$new_data;
+                my $item_tpl = $mod->{replace} ? $target_element->contents
+                                               : $target_element;
+
                 for (my $i = 0; $i < @$new_data; $i++) {
 
                     $self->_push_stack("$new_data_root.$i");
@@ -430,9 +420,9 @@ sub _render_directives {
                         total => $total
                     };
 
-                    my $tpl = $target_element->clone;
-                    $self->_render_directives($tpl, $new_directives);
-                    $tpl->insert_before($target_element);
+                    my $new_item = $item_tpl->clone;
+                    $self->_render_directives($new_item, $new_directives);
+                    $new_item->insert_before($target_element);
 
                     delete $self->data->{$self->loop_var};
                     $self->_pop_stack;
@@ -455,9 +445,31 @@ sub _render_directives {
             # We support evaluating a value from a coderef when a datapoint is a coderef.
             $action->($target_element, $self);
         }
+
+        # replace
+        $target_element->replace_with($target_element->contents)
+            if $mod->{replace};
     }
 }
 
+sub _parse_matchspec_modifiers {
+    my %mod;
+
+    # ^<match_spec>
+    $mod{replace} = $_[1] =~ /^\+?\^\+?/;
+
+    # +<match_spec>
+    $mod{prepend} = $_[1] =~ /^\^?\+\^?/;
+
+    # <match_spec>+
+    $mod{append} = $_[1] =~ /\+$/;
+
+    # remove modifier characters
+    $_[1] =~ s/^[+^]+(?=[\w\.\[\*\#])//g;
+    $_[1] =~ s/(?<=[\w\.\#\*\]])[+]+$//g;
+
+    \%mod;
+}
 
 
 

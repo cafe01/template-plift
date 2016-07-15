@@ -30,25 +30,35 @@ sub create_directives {
 
     # prepare selector
     my $internal_id = $ctx->internal_id($element->get(0));
-    my $selector = sprintf '*[%s="%s"]', $ctx->internal_id_attribute, $internal_id;
+    my $element_selector = sprintf '*[%s="%s"]', $ctx->internal_id_attribute, $internal_id;
+
 
     # data-render="[datapoint]" (step into directive)
     if ($render_instruction =~ /^\s*\[\s*([\w._-]+)\s*\]\s*$/) {
 
+        # modifiers
+        my $mod = $ctx->_parse_matchspec_modifiers($render_instruction);
+        $element_selector = '^'.$element_selector
+            if $mod->{replace} || $is_tag;
+
         # push directive stack
-        $ctx->push_at($selector, $1);
+        $ctx->push_at($element_selector, $1);
     }
 
     # data-render="datapoint"
     else {
 
-        my @data_points = map { [split '@', $_] }
-                          split /\s+/, $render_instruction;
+        foreach my $instruction (split /\s+/, $render_instruction) {
 
-        foreach my $item (@data_points) {
+            my $mod = $ctx->_parse_matchspec_modifiers($instruction);
+            my ($data_point, $attribute) = split '@', $instruction;
+            my $selector = $element_selector;
+            $selector .= "\@$attribute" if defined $attribute;
+            $selector .= '+' if $mod->{append};
+            $selector = '+'.$selector if $mod->{prepend};
+            $selector = '^'.$selector if $mod->{replace} || $is_tag;
 
-            my ($data_point, $attribute) = @$item;
-            $ctx->at(defined $attribute ? "$selector\@$attribute" : $selector, $data_point);
+            $ctx->at($selector, $data_point);
        }
     }
 }
