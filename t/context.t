@@ -1,7 +1,6 @@
 use strict;
 use Test::More 0.98;
 use FindBin;
-use DateTime;
 use Plift;
 
 
@@ -12,10 +11,8 @@ my $engine = Plift->new(
 subtest 'set()' => sub {
 
     my $ctx = $engine->template('index');
-    my $now = DateTime->now;
 
     $ctx->set('name', 'Carlos Fernando')
-        ->set('now', $now)
         ->set({
             foo => 'foo value',
             bar => 'bar value',
@@ -28,7 +25,6 @@ subtest 'set()' => sub {
 
     is_deeply $ctx->data, {
         name => 'Carlos Fernando',
-        now => $now,
         foo => 'foo value',
         bar => 'bar value',
         items => [
@@ -43,7 +39,7 @@ subtest 'set()' => sub {
 subtest 'get()' => sub {
 
     my $ctx = $engine->template('index');
-    my $now = DateTime->now;
+    my $object = Some::Class->new;
 
     $ctx->set({
         value => 'foo',
@@ -54,7 +50,7 @@ subtest 'get()' => sub {
             array_of_hash => [{ value => 'foo' }],
             hash_of_array => { items => ['foo']},
         },
-        object => $now,
+        object => $object,
         code => sub { 'foo' },
         user => {
             name => sub { "$_[1]->{first_name} $_[1]->{last_name}"},
@@ -63,7 +59,7 @@ subtest 'get()' => sub {
             last_name => 'Last',
         },
         hash_from_code => sub { +{ value => 'foo' } },
-        object_from_code => sub { $now }
+        object_from_code => sub { $object }
     });
 
     is $ctx->get('value'), 'foo', 'value';
@@ -73,12 +69,12 @@ subtest 'get()' => sub {
     is $ctx->get('array.1'), 'bar', 'array.1';
     is $ctx->get('complex.array_of_hash.0.value'), 'foo', 'complex.array_of_hash.0.value';
     is $ctx->get('complex.hash_of_array.items.0'), 'foo', 'complex.hash_of_array.items.0.value';
-    is $ctx->get('object.month'), $now->month, 'object.method';
+    is $ctx->get('object.foo_method'), $object->foo_method, 'object.method';
     is $ctx->get('code'), 'foo', 'code';
     is $ctx->get('user.name'), 'First Last', 'code with data args';
     is $ctx->get('user.alt_name'), 'First Last', 'code with data args';
     is $ctx->get('hash_from_code.value'), 'foo', 'hash_from_code.value';
-    is $ctx->get('object_from_code.month'), $now->month, 'object_from_code.method';
+    is $ctx->get('object_from_code.foo_method'), $object->foo_method, 'object_from_code.method';
 };
 
 
@@ -93,3 +89,11 @@ subtest 'render' => sub {
 
 
 done_testing;
+
+
+{
+    package Some::Class;
+    use Moo;
+
+    sub foo_method { 'foo' }
+}
