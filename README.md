@@ -39,68 +39,37 @@ Plift - Designer friendly, safe, extensible HTML template engine.
 # DESCRIPTION
 
 Plift is a HTML template engine which enforces strict separation of business logic
-from the view. It's designed to be designer friendly, safe, extensible and fast
-enough to be used as a web request renderer. This module tries to follow the
-principles described in the paper _Enforcing Strict Model-View Separation in Template Engines_
+from the view. It is designer friendly, safe, extensible and fast enough to
+be used as a web request renderer. This engine tries to follow the principles
+described in the paper _Enforcing Strict Model-View Separation in Template Engines_
 by Terence Parr of University of San Francisco. The goal is to provide suficient
 power without providing constructs that allow separation violations.
 
-# INSPIRATION
+# MANUAL
 
-The first version of Plift was inspired by the template system provided by
-[Lift](http://liftweb.net/) (hence the name), a web framework for the Scala
-programming language. They apply a concept called "View-First", which differs
-from the traditional "Controller-First" concept popularized by the MVC frameworks.
+This document is the reference for the Plift class. The manual pages are:
 
-On the "Controller-First" approach, the Controller is executed first, and is
-responsible for pulling data from the "Model", then making this data available
-to the "View". This creates a tight coupling between the controller and the
-final rendered webpage, since it needs to know and gather all data possibly
-need by the webpage templates. Thats perfect for well defined webapp actions,
-but not so perfect for creating reusable website components.
+- [Plift::Manual::Tutorial](https://metacpan.org/pod/Plift::Manual::Tutorial)
 
-On the other hand, a "View-First" framework starts by parsing the view, then
-executing small, well-defined pieces of code triggered by special html attributes
-found in the template itself. These code snippets are responsible for rendering
-dynamic data using the html element (that triggered it) as the data template.
-That reflects the reality that a webpage is composed by independent,
-well-defined blocks of dynamic html (surrounded by static html, of course), like
-a menu, gallery, a list of blog posts or any other content.
+    Step-by-step intruduction to Plift. "Hello World" style.
 
-Using that approach, a CMS application can provide all sorts of special html
-elements for template designers to use, like:
+- [Plift::Manual::DesignerFriendly](https://metacpan.org/pod/Plift::Manual::DesignerFriendly)
 
-    <google-map address="..." />
+    Pure HTML5 template files makes everything easier to write and better to maintain.
+    Designers can use their WYSIWYG editor, backend developers can unit test their
+    element renderers.
 
-    <youtube-video id="..." />
+- [Plift::Manual::Inception](https://metacpan.org/pod/Plift::Manual::Inception)
 
-    <!-- a form that renders itself -->
-    <x-form name="contact" />
+    Talks about the web framework that inspired Plift, and its 'View-First'
+    approach to web request handling. (As opposed to the widespread 'Controller-First').
 
-    <blog-list limit="3">
-        <!-- html template for list posts here -->
-    </blog-list>
+- [Plift::Manual::CustomHandler](https://metacpan.org/pod/Plift::Manual::CustomHandler)
 
-    <gallery limit="3">
-        <!-- html template for list posts here -->
-    </gallery>
-
-    <youtube-playlist id="...">
-     <!-- html template for list items here -->
-    </youtube-playlist>
-
-A kind of server-side ["Custom Elements"](https://developer.mozilla.org/en-US/docs/Web/Web_Components/Custom_Elements)).
-
-My frist version of Plift (back in 2013, DarkPAN) implemented only the
-minimum to execute the "View-First" approach: it could 'include', 'wrap' and
-call code snippets triggered from html elements. It couldn't even interpolate
-data by itself. And that proved to be enough to create dozens of corporate
-websites and (albeit simple) webapps (including our own website
-http://kreato.com.br, of course). With small annoyances here and there, but
-haven't been using [Template](https://metacpan.org/pod/Template)::Toolkit type of engine (for website templating)
-since then.
-
-That being said, this version of plift
+    Explains how Plift is just an engine for reading/parsing HTML files, and
+    dispaching subroutine handlers bound to XPath expressions. You will learn how
+    to write your custom handlers using the same dispaching loop as the builtin
+    handlers.
 
 # METHODS
 

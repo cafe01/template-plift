@@ -52,6 +52,7 @@
       },
       "test" : {
          "requires" : {
+            "DateTime" : "0",
             "Test::More" : "0.98"
          }
       }

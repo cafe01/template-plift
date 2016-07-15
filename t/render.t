@@ -51,7 +51,14 @@ sub test_render_directives {
 
     my $tpl = $engine->template('render');
 
-    $tpl->at('#name' => 'fullname')
+    $tpl->at([
+            '#name' => 'fullname',
+            '.append-name+' => 'fullname',
+            '+.prepend-name' => 'fullname',
+            '^.replace-name name' => 'fullname',
+            '^#append-replace-name name+' => 'fullname',
+            '^+#prepend-replace-name name' => 'fullname',
+        ])
         ->at('#code' => sub {
             my ($el, $ctx)  = @_;
             $el->new('<div/>')->text($ctx->get('fullname'))
@@ -88,6 +95,11 @@ sub test_render_directives {
 
     # Scalar
     is $doc->find('#name')->text, $data{fullname};
+    is $doc->find('.append-name')->text, "Hello, $data{fullname}";
+    is $doc->find('.prepend-name')->text, "$data{fullname}, hello!";
+    is $doc->find('.replace-name')->text, "Hello, $data{fullname}";
+    is $doc->find('#append-replace-name')->text, "Hello, Mr $data{fullname}!";
+    is $doc->find('#prepend-replace-name')->text, "Mr $data{fullname}, hello!";
 
     # CodeRef
     is $doc->find('#code div')->text, $data{fullname};

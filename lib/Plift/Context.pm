@@ -345,7 +345,26 @@ sub _render_directives {
 
     for (my $i = 0; $i < @$directives; $i += 2) {
 
-        my ($selector, $attribute) = split '@', $directives->[$i];
+        my $match_spec = $directives->[$i];
+
+        # modifiers
+        my %mod;
+
+        # ^<match_spec>
+        $mod{replace} = $match_spec =~ /^\+?\^\+?/;
+
+        # +<match_spec>
+        $mod{prepend} = $match_spec =~ /^\^?\+\^?/;
+
+        # <match_spec>+
+        $mod{append} = $match_spec =~ /\+$/;
+
+        # remove modifier characters
+        $match_spec =~ s/^[+^]+(?=[\w\.\#])//g;
+        $match_spec =~ s/(?<=[\w\.\#])[+^]+$//g;
+        # printf STDERR "# ms: $match_spec\n";
+
+        my ($selector, $attribute) = split '@', $match_spec;
         my $action = $directives->[$i+1];
 
         # printf STDERR "# directive: $selector\n";
@@ -355,15 +374,32 @@ sub _render_directives {
         # Scalar
         if (!ref $action) {
 
-
             my $value = $self->get($action);
-            # printf STDERR "#\taction: $action -> $value\n";
 
             $target_element->remove unless defined $value;
 
-            !defined $attribute  ? $target_element->text($value) :
-            $attribute eq 'HTML' ? $target_element->html($value)
-                                 : $target_element->attr($attribute, $value);
+            if (defined $attribute && $attribute ne 'HTML') {
+
+                # TODO append prepend attribute
+                $target_element->attr($attribute, $value);
+            }
+            else {
+
+                # render Text by default (i.e. escaped HTML)
+                $value = [$target_element->{document}->createTextNode($value)]
+                    unless defined $attribute && $attribute eq 'HTML';
+
+                # replace contents by default
+                $target_element->contents->remove
+                    unless $mod{prepend} || $mod{append};
+
+                $mod{prepend} ? $target_element->prepend($value)
+                              : $target_element->append($value);
+            }
+
+            # replace
+            $target_element->replace_with($target_element->contents)
+                if $mod{replace};
         }
 
         # ArrayRef
