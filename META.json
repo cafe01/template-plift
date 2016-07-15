@@ -46,13 +46,13 @@
             "Moo" : "0",
             "Path::Tiny" : "0",
             "Scalar::Util" : "0",
+            "XML::LibXML" : "2.0126",
             "XML::LibXML::jQuery" : "0",
             "perl" : "5.008001"
          }
       },
       "test" : {
          "requires" : {
-            "DateTime" : "0",
             "Test::More" : "0.98"
          }
       }

@@ -8,4 +8,5 @@ requires 'Moo';
 requires 'Class::Load';
 requires 'Path::Tiny';
 requires 'Scalar::Util';
+requires 'XML::LibXML', '2.0126';
 requires 'XML::LibXML::jQuery';

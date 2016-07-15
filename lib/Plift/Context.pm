@@ -421,8 +421,8 @@ sub _render_directives {
                     };
 
                     my $new_item = $item_tpl->clone;
-                    $self->_render_directives($new_item, $new_directives);
                     $new_item->insert_before($target_element);
+                    $self->_render_directives($new_item, $new_directives);
 
                     delete $self->data->{$self->loop_var};
                     $self->_pop_stack;
