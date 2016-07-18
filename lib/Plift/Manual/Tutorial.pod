@@ -176,3 +176,9 @@ render unescaped HTML, but its not the default.
 =head1 CUSTOM HANDLERS
 
 =head1 CREATING REUSABLE COMPONENTS
+
+=head1 AUTHOR
+
+Carlos Fernando Avila Gratz E<lt>cafe@kreato.com.brE<gt>
+
+=cut

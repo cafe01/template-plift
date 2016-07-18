@@ -2,14 +2,14 @@ __END__
 
 =head1 INTRODUCTION
 
-This page describes how to attach custom handlers on the L<Plift> template engine.
-
+This page describes how to attach custom processing handlers on the L<Plift>
+template engine.
 
 =head1 WHAT IS A HANDLER?
 
 Besides the data interpolation feature, the Plift engine has just one core
-funcionality. That is to search the HTML document using registered xpath
-expressions and triggering the associated subroutine.
+funcionality that is to search the HTML document using registered xpath
+expressions and triggering the associated subroutines.
 
 A handler is just a perl subroutine bound to a xpath expression, usualy targgeting
 a element or attribute (like C<< <x-include> >> or C<data-plift-include>).
@@ -44,8 +44,3 @@ just a few lines of code.
 =item L<Plift::Handler::Render>
 
 =back
-
-=head1
-
-Custom handlers are just a fancy name for a subroutine attached to some xpath
-expression.

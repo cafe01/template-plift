@@ -2,6 +2,20 @@ Revision history for Perl extension Plift
 
 {{$NEXT}}
 
+0.02 2016-07-18T22:12:26Z
+
+    - imlemented <x-render> processing instructions
+      - creates render directives dynamically
+    - implemented match modifiers to append+, +prepend and ^replace the element
+      - like Template::Pure
+
+    - added manual pages
+      - Plift::Manual::Tutorial
+      - Plift::Manual::DesignerFriendly
+      - Plift::Manual::Inception
+      - Plift::Manual::CustomHandler
+
+
 0.01 2016-07-12T00:47:33Z
 
     - first released version, includes all basic features:

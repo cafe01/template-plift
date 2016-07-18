@@ -57,3 +57,10 @@ since then.
 
 This version has a more generic handler dispatcher, and also has the data rendering
 feature, so we can call it a templating engine. :)
+
+
+=head1 AUTHOR
+
+Carlos Fernando Avila Gratz E<lt>cafe@kreato.com.brE<gt>
+
+=cut

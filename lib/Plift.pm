@@ -1,6 +1,5 @@
 package Plift;
 
-use 5.008001;
 use strict;
 use warnings;
 use Moo;
@@ -10,7 +9,7 @@ use XML::LibXML::jQuery ();
 use Carp;
 use Plift::Context;
 
-our $VERSION = "0.01";
+our $VERSION = "0.02";
 
 use constant {
     XML_DOCUMENT_NODE      => 9,
@@ -333,7 +332,8 @@ power without providing constructs that allow separation violations.
 
 =head1 MANUAL
 
-This document is the reference for the Plift class. The manual pages are:
+This document is the reference for the Plift class. The manual pages (not yet
+complete) are:
 
 =over
 

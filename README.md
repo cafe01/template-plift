@@ -47,7 +47,8 @@ power without providing constructs that allow separation violations.
 
 # MANUAL
 
-This document is the reference for the Plift class. The manual pages are:
+This document is the reference for the Plift class. The manual pages (not yet
+complete) are:
 
 - [Plift::Manual::Tutorial](https://metacpan.org/pod/Plift::Manual::Tutorial)
 
