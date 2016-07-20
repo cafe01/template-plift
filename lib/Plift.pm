@@ -17,7 +17,7 @@ use constant {
     XML_DTD_NODE           => 14
 };
 
-has 'path', is => 'ro', default => sub { [] };
+has 'path', is => 'ro', default => sub { ['.'] };
 has 'plugins', is => 'ro', default => sub { [] };
 has 'encoding', is => 'rw', default => 'UTF-8';
 has 'debug', is => 'rw', default => sub { $ENV{PLIFT_DEBUG} };
@@ -42,7 +42,14 @@ sub BUILD {
 
 
     # instantiate and init
-    foreach my $name (@components) {
+    $self->load_components(@components);
+}
+
+sub load_components {
+    my $self = shift;
+
+    # instantiate and init
+    foreach my $name (@_) {
 
         my $class = $name =~ /^\+/ ? substr($name, 1)
                                    : __PACKAGE__.'::'.$name;
@@ -72,7 +79,6 @@ sub template {
     );
 }
 
-
 sub process {
     my ($self, $template, $data, $schema) = @_;
 
@@ -82,6 +88,65 @@ sub process {
         if $schema;
 
     $ctx->render($data);
+}
+
+sub render {
+    my $self = shift;
+    $self->process(@_)->as_html;
+}
+
+
+sub add_handler {
+    my ($self, $config) = @_;
+
+    confess "missing handler callback"
+        unless $config->{handler};
+
+    confess "missing handler name"
+        unless $config->{name};
+
+    my @match;
+
+    for my $key (qw/ tag attribute /) {
+        $config->{$key} = [$config->{$key}]
+            if defined $config->{$key} && !ref $config->{$key};
+    }
+
+    push(@match, map { ".//$_" } @{$config->{tag}})
+        if $config->{tag};
+
+    push(@match, map { ".//*[\@$_]" } @{$config->{attribute}})
+        if $config->{attribute};
+
+    push @match, $config->{xpath}
+        if $config->{xpath};
+
+    my $match = join ' | ', @match;
+
+    printf STDERR "[Plift] Adding handler: $match\n"
+        if $self->debug;
+
+    # check config has one of tag/attribute/xpath
+    confess "Invalid handler. Missing at least one binding criteria (tag, attribute or xpath)."
+        unless $match;
+
+    my $handler = {
+        tag => $config->{tag},
+        attribute => $config->{attribute},
+        name => $config->{name},
+        xpath => $match,
+        sub => $config->{handler}
+    };
+
+    push @{$self->{handlers}}, $handler;
+    $self->{handlers_by_name}->{$handler->{name}} = $handler;
+
+    $self;
+}
+
+sub get_handler {
+    my ($self, $name) = @_;
+    $self->{handlers_by_name}->{$name};
 }
 
 
@@ -222,60 +287,6 @@ sub _find_template_file {
     return;
 }
 
-sub add_handler {
-    my ($self, $config) = @_;
-
-    confess "missing handler callback"
-        unless $config->{handler};
-
-    confess "missing handler name"
-        unless $config->{name};
-
-    my @match;
-
-    for my $key (qw/ tag attribute /) {
-        $config->{$key} = [$config->{$key}]
-            if defined $config->{$key} && !ref $config->{$key};
-    }
-
-    push(@match, map { ".//$_" } @{$config->{tag}})
-        if $config->{tag};
-
-    push(@match, map { ".//*[\@$_]" } @{$config->{attribute}})
-        if $config->{attribute};
-
-    push @match, $config->{xpath}
-        if $config->{xpath};
-
-    my $match = join ' | ', @match;
-
-    printf STDERR "[Plift] Adding handler: $match\n"
-        if $self->debug;
-
-    # check config has one of tag/attribute/xpath
-    confess "Invalid handler. Missing at least one binding criteria (tag, attribute or xpath)."
-        unless $match;
-
-    my $handler = {
-        tag => $config->{tag},
-        attribute => $config->{attribute},
-        name => $config->{name},
-        xpath => $match,
-        sub => $config->{handler}
-    };
-
-    push @{$self->{handlers}}, $handler;
-    $self->{handlers_by_name}->{$handler->{name}} = $handler;
-
-    $self;
-}
-
-sub get_handler {
-    my ($self, $name) = @_;
-    $self->{handlers_by_name}->{$name};
-}
-
-
 
 
 1;
@@ -392,11 +403,7 @@ XPath expression matching the nodes bound this handler.
 
 =head2 template
 
-=over
-
-=item Arguments: $template_name
-
-=back
+    $context = $plift->template($template_name, \%options)
 
 Creates a new L<Plift::Context> instance, which will load, process and render
 template C<$template_name>. See L<Plift::Context/at>, L<Plift::Context/set> and
@@ -404,28 +411,22 @@ L<Plift::Context/render>.
 
 =head2 process
 
-=over
-
-=item Arguments: $template_name, $data, $directives
-
-=item Return Value: L<$document|XML::LibXML::jQuery>
-
-=back
+    $document = $plift->process($template_name, \%data, \@directives)
 
 A shortcut method.
 A new context is created via  L</template>, rendering directives are set via
 L<Plift::Context/at> and finally the template is rendered via L<Plift::Context/render>.
+Returns a L<XML::LibXML::jQuery> object representing the final processed document.
 
-
-    my $data = {
+    my \%data = (
         fullname => 'John Doe',
         contact => {
             phone => 123,
             email => 'foo@example'
         }
-    };
+    );
 
-    my $directives = [
+    my @directives =
         '#name' => 'fullname',
         '#name@title' => 'fullname',
         '#contact' => {
@@ -433,9 +434,25 @@ L<Plift::Context/at> and finally the template is rendered via L<Plift::Context/r
                 '.phone' => 'phone',
                 '.email' => 'email',
             ]
-    ]
+    );
 
-    my $document = $plift->process('index', $data, $directives);
+    my $document = $plift->process('index', $data, \@directives);
+
+    print $document->as_html;
+
+=head2 render
+
+    $html = $plift->render($template_name, \%data, \@directives)
+
+A shortcut for C<< $plift->process()->as_html >>.
+
+=head2 load_components
+
+    $plift = $plift->load_components(@components)
+
+Loads one or more Plift components. For each component, we build a class name
+by prepending C<Plift::> to the component name, then we load the class, instantiate
+a new object and call C<< $component->register($self) >> on it.
 
 
 =head1 SIMILAR PROJECTS
@@ -456,6 +473,11 @@ Perl reimplementation of Pure.js. This module inspired Plift's render directives
 =item L<Template::Semantic>
 
 Similar to Template::Pure, but mixes data with render directives.
+
+=item L<Template::Flute>
+
+Uses a XML specification format for the rendering directives. Has lots of other
+features.
 
 =back
 

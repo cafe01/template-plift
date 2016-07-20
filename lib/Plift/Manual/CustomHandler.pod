@@ -32,7 +32,7 @@ The following example attaches a handler to the HTML C<< <head> >> element:
     });
 
 
-I encourage you to read the source of the builtin handlers. They a very simple,
+I encourage you to read the source of the builtin handlers. They are very simple,
 just a few lines of code.
 
 =over

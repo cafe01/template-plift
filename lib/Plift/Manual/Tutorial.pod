@@ -1,13 +1,13 @@
 __END__
 
+=encoding utf-8
+
 =head1 INTRODUCTION
 
-This is a step-by-step tutorial on how to use Plift. We will start using 100%
-pure HTML templates, so you can learn how to render data using render directives.
-
+This is a step-by-step tutorial on how to use Plift. You'll start using 100%
+pure HTML templates to learn how to render data using directives.
 Then you'll learn how to use the builtin processing instructions in your
-template files. There are just three: C<< <x-include/> >>, C<< <x-wrap/> >> and
-C<< <x-render/> >>.
+template files.
 
 Finnaly, I'll show how to create your own custom processing instructions
 (triggered by custom tags/attributes) and how to bundle them in the form of
@@ -47,19 +47,19 @@ That will render (not surprisingly) the following text into C< $html >:
         <h1>Hello World!</h1>
     </section>
 
-Ok, now lets explain what C< $plift->render > does. As you can see, we passed three
-arguments: the template name, some data, and a list of render directives. The first
-is the name of the template file, without the C<.html> extension. The second
+Ok, now lets explain what C< $plift->render > did. As you can see, the first
+argument is the name of the template file, without the C<.html> extension. The second
 argument C<\%data> is a reference to a hash of data to make available for
 templates. Finally, the third argument C<\@directives> is a reference to a list of
 render directives, which are simple rules mapping a CCS selector to a data key.
 
-Our example uses only one render directive, C< 'h1' => 'hello_message' >, that
+Our example uses only one render directive, C<< 'h1' => 'hello_message' >>, that
 tells Plift to render the value of the 'hello_message' data key into the C<< <h1> >>
-element. If there were multiple C<<<h1>>> elements in the template, all of them
-would get rendered. Under the hood, Plift uses L<XML::LibXML::jQuery> to
-manipulate the HTML templates. The render directive in the example is equivalent
-to the following code:
+element. If there were multiple C<< <h1> >> elements in the template, all of them
+would get rendered.
+
+Under the hood, Plift uses L<XML::LibXML::jQuery> to manipulate HTML. The render
+directive in the example is equivalent to the following code:
 
     my $data_value = $context->get('hello_message');
     $document->find('h1')->text($data_value);
@@ -81,43 +81,45 @@ website "theme" or "skin":
         ]
     );
 
-Any file with the same name (and relative path) on the first paths will read
-instead of the equivalent file of the second path. If you ask for the template
-C<'error_pages/404'> (remember, no .html extension), Plift first looks for
-C</myapp/website-foo/skin/templates/error_pages/404.html> then
-C</myapp/share/skin/base/templates/error_pages/404.html>.
+If you ask for the template C<'error_pages/404'> (remember, no .html extension),
+Plift first looks for C</myapp/website-foo/skin/templates/error_pages/404.html> then
+C</myapp/share/skin/base/templates/error_pages/404.html>. The first existing file
+will be used, totally overriding the equivalent file on subsequent paths. There
+is no "template inheritante" or anything like that.
 
 =head1 THE CONTEXT
 
-Before proceding, we must learn about the Plift::Context object. Is is responsible
-for holding all data and render directives for the given rendering... context.
+Before proceding, we must learn about the Plift::Context object. At a high level,
+you can think of the context object as a representation of the template that we
+are procesing. Thats why we create a new context via L<Plift/template>, and
+render it via L<Plift::Context/render>. Which gives us a nice syntax:
 
-In fact, the methods L<Plift/render> and  L<Plift/process> methods are just
-wrappers around the methods  L<Plift::Context/set>, L<Plift::Context/at> and
-L<Plift::Context/render>. The follwing code:
+    $document = $plift->template('foo')
+                      ->at(\@directives)
+                      ->render(\%data);
 
-    my $html = $plift->render('index', \%data, \@directives );
+Semantics aside, a L<Plift::Context> instance is the storage for all things
+related to the current processing.. context. It's meant to live only for the
+duration of that template rendering (usualy a web request). In contrast to the
+actual L<Plift> instance that is meant to live for the whole application life.
 
-is equivalent to:
+The methods L<Plift/render> and L<Plift/process> methods are just wrappers
+around L<Plift::Context/set>, L<Plift::Context/at> and L<Plift::Context/render>.
+The code snipped given above is equivalent to:
 
-    my $tpl = $plift->template('index');    # returns a Plift::Context inst
-    $tpl->set(\%data);
-    $tpl->at();
+    $document = $plift->process('index', \%data, \@directives );
 
-
+See L<Plift::Context> for the complete reference.
 
 =head1 RENDER DIRECTIVES
 
-Render directives are pairs of C<<MATCH => ACTION>> values. The match part is a CSS
-selector that target the element the action applies to. You can use any selector
+Render directives are pairs of C<< MATCH => ACTION >> values. The match part is a CSS
+selector that targets the element the action applies to. You can use any selector
 supported by L<HTML::Selector::XPath>. The action part takes a few variations,
 as described next.
 
 All render directives and template data are stored in the L<Plift::Context>
-object. Directives are added using the method L<Plift::Context/at>. And data
-is added using the  using the method L<Plift::Context/set>. ance
-
-
+object. Directives are added using the method L<Plift::Context/at>.
 
 =head2 Scalar - Interpolate data value
 
@@ -126,46 +128,133 @@ is added using the  using the method L<Plift::Context/set>. ance
 
 This is the most common directive, where the selector points to a data point,
 like C< '.first-name' => 'user.first_name' >. By default the data value is
-rendered as the element content. You can add a special suffix to you MATCH
-in the form of '<selector>@<attribute>' to render the value as an element's
-HTML attribute. A final variation exists to allow the data value to be rendered
-as HTML in the element's content, set the special sufixx '@HTML' (yes, uppercase.)
+rendered as the element text content. You can add a some C<MATCH> modifiers to
+control where and how the value is interpolated.
 
 =over
 
-=item HTML vs TEXT
+=item '+': Append or prepend a value
 
-The distinction between text and HTML is very important, is the cause of the
-L<XSS vulnerability|https://www.owasp.org/index.php/Cross-site_Scripting_(XSS)>.
-This vulnerability got so common on web because almost all template engines are
-designed to process text. These engines can be used to render a config file,
-a christmas letter, and also HTML. Sure, all of those templating engines also
-provides a way to properly HTML-escape a value, usualy in the form of filters.
-But being a text templating engine, they can't just HTML-escape values by default.
-The reality when using that kind of engine is that developers can (and will)
-forget to add the proper filters, or just don't know about this security
-vulnerability at all.
+    '+body' => 'layout.header',
+    'body+' => 'layout.footer'
 
-Plift is a template engine just for HTML, and it's implemented on top of
-libxml. It means that for rendering text, we call L<XML::LibXML::Document/createTextNode>,
-for attributes, L<XML::LibXML::Document/setAttribute> and for rendering the
-final document we call L<XML::LibXML::Document/toStringHTML>. Libxml takes care
-of the proper escaping.
+The default behavior is for a match to replace the matched node's content.
+In some cases you may wish to preserve the template content and instead either
+add more content to the front or back of it.
 
-Does it mean I'm immune to XSS vulnerability? No, you can still tell Plift to
-render unescaped HTML, but its not the default.
+=item '@HTML': Render as HTML
+
+    '.blog-post-content@HTML' => 'post.content'
+
+The default is to explicitly create L<XML::LibXML::Text> nodes, instructing libxml
+to automatically escape any special HTML character.
+
+=item '@<attr>': Select an attribute within the current node
+
+    'a.blog-post-link@href' => 'post.url'
+
+Render the value in a node's attribute instead of inner content.
+
+=item '^': Replace current node completely
+
+    '^.user-name' => 'user.fullname'
+
+Normally we replace, append or prepend to the B<content> of the selected node. Using
+the '^' at the front of your match indicates operation should happen on the
+entire node, not just the content. Can be combined with '+' for append/prepend.
 
 =back
 
+=over
+
 =head2 Arrayref - Run directives under a new DOM root
+
+    # directive
+    '#contact' => [
+        '.phone' => 'contact.phone',
+        '.email' => 'contact.email',
+    ]
+
+    # data
+    contact => {
+        phone => '1234-5678',
+        email => 'foo@example.com'
+    }
+
+In the example above, the directives in the arrayref are processed using the
+'#contact' node as the DOM root instead of document node. These new directives
+can be any type of directive as already shown or later documented.
 
 =head2 Hashref - Move the root of the Data Context
 
+    # directive
+    '#contact' => {
+        'contact' => [
+            '.phone' => 'phone',
+            '.email' => 'email',
+        ]
+    }
+
+    # data
+    contact => {
+        phone => '1234-5678',
+        email => 'foo@example.com'
+    }
+
+Just like it may be valuable to move the root DOM context to an inner node,
+sometimes you'd like to also move the root of the current Data context to an inner
+path point. This can result in cleaner templates with less repeated syntax, as
+well as promote reusability. In order to do this you use a Hashref whose key is
+the path under the data context you wish to move to and who's value is an
+Arrayref of new directives. These new directives can be any type of directive as
+already shown or later documented.
+
 =head2 HashRef - Create a loop
+
+    # directive
+    'li.user' => {
+        '[users]' => [
+            '.first-name' => 'first_name',
+            '.last-name' => 'last_name',
+        ],
+    }
+
+    # data
+    users => [
+        { first_name => 'First 01', last_name => 'Last 01' },
+        { first_name => 'First 02', last_name => 'Last 02' },
+        { first_name => 'First 03', last_name => 'Last 03' }
+    ]
+
+Besides moving the current data context, setting the value of a match spec key
+to a hashref can be used to perform loops over a node, such as when you wish to
+create a list. The only difference to the previous Hashref syntax is the angle
+brakets C< [] > around the data-point name, to tell Plift this is a loop.
+
+In this case, C< users > must be an arrayref of hashref. Plift will create
+a clone of the 'li.user' element, and use that as DOM root for rendering each
+item of the array.
+
 
 =head2 CodeRef - Programmatically render the element
 
-=head2 More on the selector
+    # directive
+    '#contact' => sub {
+        my ($element, $ctx) = @_;
+        my $text = sprintf "%s (☎ %s)", $ctx->get('contact.email'), $ctx->get('contact.phone');
+        $element->text($text)->attr( title => $text );
+    }
+
+    # data
+    contact => {
+        phone => '1234-5678',
+        email => 'foo@example.com'
+    }
+
+
+Perform any custom processing on the target element. The coderef receives the
+element and the context object as arguments. The return value of the custom code
+is ignored.
 
 =head2 THE DOT NOTATION
 

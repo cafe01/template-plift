@@ -9,13 +9,9 @@ my $engine = Plift->new(
 );
 
 
-subtest 'context' => sub {
-
-    my $c = $engine->template('index');
-
-    isa_ok $c, "Plift::Context";
-    is $c->template, 'index';
-};
+isa_ok $engine->template('index'), "Plift::Context", 'template()';
+isa_ok $engine->process('index'), 'XML::LibXML::jQuery', 'process()';
+like $engine->render('index'), qr/Hello Plift/, 'render()';
 
 
 subtest '_find_template_file' => sub {

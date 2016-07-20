@@ -115,6 +115,8 @@ sub test_render_directives {
     is $doc->find('#contact2 .email')->text, $data{contact}{email};
 
     # HashRef (loop)
+    ok not exists $data{posts}[0]{$tpl->loop_var};
+
     is $doc->find('article')->size, scalar @{$data{posts}};
     my $article = $doc->find('article')->first;
     is $article->find('.position')->text, 1;

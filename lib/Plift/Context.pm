@@ -400,9 +400,6 @@ sub _render_directives {
 
             my ($new_data_root, $new_directives) = %$action;
 
-            # $new_data_root = "$data_root.$new_data_root"
-            #     if defined $data_root;
-
             my $new_data = $self->get($new_data_root);
 
             # loop render
@@ -415,8 +412,10 @@ sub _render_directives {
                 for (my $i = 0; $i < @$new_data; $i++) {
 
                     $self->_push_stack("$new_data_root.$i");
-                    $self->data->{$self->loop_var} = {
-                        index => $i+1,
+
+                    # temporary loop var
+                    local $self->data->{$self->loop_var} = {
+                        index => $i + 1,
                         total => $total
                     };
 
@@ -424,7 +423,6 @@ sub _render_directives {
                     $new_item->insert_before($target_element);
                     $self->_render_directives($new_item, $new_directives);
 
-                    delete $self->data->{$self->loop_var};
                     $self->_pop_stack;
                 }
 
