@@ -2,6 +2,11 @@ Revision history for Perl extension Plift
 
 {{$NEXT}}
 
+0.03 2016-07-20T19:09:47Z
+
+    - implemented Plift::render(), Plift::load_components()
+    - added a little more documentation
+
 0.02 2016-07-18T22:12:26Z
 
     - imlemented <x-render> processing instructions

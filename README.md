@@ -95,7 +95,7 @@ Valid parameters are:
 
 ## template
 
-- Arguments: $template\_name
+    $context = $plift->template($template_name, \%options)
 
 Creates a new [Plift::Context](https://metacpan.org/pod/Plift::Context) instance, which will load, process and render
 template `$template_name`. See ["at" in Plift::Context](https://metacpan.org/pod/Plift::Context#at), ["set" in Plift::Context](https://metacpan.org/pod/Plift::Context#set) and
@@ -103,22 +103,22 @@ template `$template_name`. See ["at" in Plift::Context](https://metacpan.org/pod
 
 ## process
 
-- Arguments: $template\_name, $data, $directives
-- Return Value: [$document](https://metacpan.org/pod/XML::LibXML::jQuery)
+    $document = $plift->process($template_name, \%data, \@directives)
 
 A shortcut method.
 A new context is created via  ["template"](#template), rendering directives are set via
 ["at" in Plift::Context](https://metacpan.org/pod/Plift::Context#at) and finally the template is rendered via ["render" in Plift::Context](https://metacpan.org/pod/Plift::Context#render).
+Returns a [XML::LibXML::jQuery](https://metacpan.org/pod/XML::LibXML::jQuery) object representing the final processed document.
 
-    my $data = {
+    my \%data = (
         fullname => 'John Doe',
         contact => {
             phone => 123,
             email => 'foo@example'
         }
-    };
+    );
 
-    my $directives = [
+    my @directives =
         '#name' => 'fullname',
         '#name@title' => 'fullname',
         '#contact' => {
@@ -126,9 +126,25 @@ A new context is created via  ["template"](#template), rendering directives are 
                 '.phone' => 'phone',
                 '.email' => 'email',
             ]
-    ]
+    );
 
-    my $document = $plift->process('index', $data, $directives);
+    my $document = $plift->process('index', $data, \@directives);
+
+    print $document->as_html;
+
+## render
+
+    $html = $plift->render($template_name, \%data, \@directives)
+
+A shortcut for `$plift->process()->as_html`.
+
+## load\_components
+
+    $plift = $plift->load_components(@components)
+
+Loads one or more Plift components. For each component, we build a class name
+by prepending `Plift::` to the component name, then we load the class, instantiate
+a new object and call `$component->register($self)` on it.
 
 # SIMILAR PROJECTS
 
@@ -146,6 +162,11 @@ This is a list of modules (that I know of) that pursue similar goals:
 - [Template::Semantic](https://metacpan.org/pod/Template::Semantic)
 
     Similar to Template::Pure, but mixes data with render directives.
+
+- [Template::Flute](https://metacpan.org/pod/Template::Flute)
+
+    Uses a XML specification format for the rendering directives. Has lots of other
+    features.
 
 # LICENSE
 

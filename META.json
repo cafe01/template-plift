@@ -46,7 +46,6 @@
             "Moo" : "0",
             "Path::Tiny" : "0",
             "Scalar::Util" : "0",
-            "XML::LibXML" : "2.0126",
             "XML::LibXML::jQuery" : "0",
             "perl" : "5.008001"
          }
@@ -69,6 +68,6 @@
          "web" : "https://github.com/cafe01/template-plift"
       }
    },
-   "version" : "0.02",
+   "version" : "0.03",
    "x_authority" : "cpan:CAFEGRATZ"
 }

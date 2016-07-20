@@ -9,7 +9,7 @@ use XML::LibXML::jQuery ();
 use Carp;
 use Plift::Context;
 
-our $VERSION = "0.02";
+our $VERSION = "0.03";
 
 use constant {
     XML_DOCUMENT_NODE      => 9,

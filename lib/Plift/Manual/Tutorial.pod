@@ -165,8 +165,6 @@ entire node, not just the content. Can be combined with '+' for append/prepend.
 
 =back
 
-=over
-
 =head2 Arrayref - Run directives under a new DOM root
 
     # directive
