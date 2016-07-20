@@ -17,7 +17,7 @@ use constant {
     XML_DTD_NODE           => 14
 };
 
-has 'path', is => 'ro', default => sub { ['.'] };
+has 'paths', is => 'ro', default => sub { ['.'] };
 has 'plugins', is => 'ro', default => sub { [] };
 has 'encoding', is => 'rw', default => 'UTF-8';
 has 'debug', is => 'rw', default => sub { $ENV{PLIFT_DEBUG} };
@@ -66,7 +66,7 @@ sub template {
 
     # path copy for the load_template closure
     # this way we do not expose the engine nor the path to the context object
-    my @path = @{ $options->{path} || $self->path };
+    my @paths = @{ $options->{paths} || $self->paths };
 
     Plift::Context->new(
         template => $name,
@@ -74,7 +74,7 @@ sub template {
         handlers => [@{ $self->{handlers}}],
         load_template => sub {
             my ($ctx, $name) = @_;
-            $self->_load_template($name, \@path, $ctx)
+            $self->_load_template($name, \@paths, $ctx)
         }
     );
 }
@@ -151,11 +151,11 @@ sub get_handler {
 
 
 sub _load_template {
-    my ($self, $name, $path, $ctx) = @_;
+    my ($self, $name, $paths, $ctx) = @_;
 
     # resolve template name to file
-    my ($template_file, $template_path) = $self->_find_template_file($name, $path, $ctx->relative_path_prefix);
-    die sprintf "Can't find a template file for template '%s'. Tried:\n%s\n", $name, join(",\n", @$path)
+    my ($template_file, $template_path) = $self->_find_template_file($name, $paths, $ctx->relative_path_prefix);
+    die sprintf "Can't find a template file for template '%s'. Tried:\n%s\n", $name, join(",\n", @$paths)
         unless $template_file;
 
     # update contex relative path
@@ -255,7 +255,7 @@ sub _load_template {
 }
 
 sub _find_template_file {
-    my ($self, $template_name, $path, $relative_prefix) = @_;
+    my ($self, $template_name, $paths, $relative_prefix) = @_;
     $relative_prefix ||= '';
 
     # append prefix to relative paths (Only './foo' and '../foo' are considered relative, not plain 'foo')
@@ -267,7 +267,7 @@ sub _find_template_file {
     # clean \x00 char that can be used to truncate our string
     $template_name =~ tr/\x00//d;
 
-    foreach my $path (@$path) {
+    foreach my $path (@$paths) {
 
         if (-e (my $file = "$path/$template_name.html")) {
 

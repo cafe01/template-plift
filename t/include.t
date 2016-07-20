@@ -5,7 +5,7 @@ use Plift;
 
 
 my $engine = Plift->new(
-    path => ["$FindBin::Bin/templates", "$FindBin::Bin/other_templates"],
+    paths => ["$FindBin::Bin/templates", "$FindBin::Bin/other_templates"],
 );
 
 

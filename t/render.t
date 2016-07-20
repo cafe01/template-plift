@@ -5,7 +5,7 @@ use FindBin;
 use Plift;
 
 my $engine = Plift->new(
-    path => ["$FindBin::Bin/templates"],
+    paths => ["$FindBin::Bin/templates"],
 );
 
 my @tags = (

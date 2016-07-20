@@ -5,7 +5,7 @@ use Plift;
 
 
 my $engine = Plift->new(
-    path => ["$FindBin::Bin/templates", "$FindBin::Bin/other_templates"],
+    paths => ["$FindBin::Bin/templates", "$FindBin::Bin/other_templates"],
 );
 
 
@@ -16,24 +16,24 @@ like $engine->render('index'), qr/Hello Plift/, 'render()';
 
 subtest '_find_template_file' => sub {
 
-    is $engine->_find_template_file('index', $engine->path), "$FindBin::Bin/templates/index.html";
-    is $engine->_find_template_file('other_index', $engine->path), "$FindBin::Bin/other_templates/other_index.html";
+    is $engine->_find_template_file('index', $engine->paths), "$FindBin::Bin/templates/index.html";
+    is $engine->_find_template_file('other_index', $engine->paths), "$FindBin::Bin/other_templates/other_index.html";
 
-    is_deeply [$engine->_find_template_file('index', $engine->path)],
+    is_deeply [$engine->_find_template_file('index', $engine->paths)],
               ["$FindBin::Bin/templates/index.html", "$FindBin::Bin/templates"];
 
-    is $engine->_find_template_file('layout/footer', $engine->path), "$FindBin::Bin/templates/layout/footer.html";
-    is $engine->_find_template_file('./header', $engine->path, 'layout/'), "$FindBin::Bin/templates/layout/header.html";
-    is $engine->_find_template_file('../index', $engine->path, 'layout/'), "$FindBin::Bin/templates/index.html";
+    is $engine->_find_template_file('layout/footer', $engine->paths), "$FindBin::Bin/templates/layout/footer.html";
+    is $engine->_find_template_file('./header', $engine->paths, 'layout/'), "$FindBin::Bin/templates/layout/header.html";
+    is $engine->_find_template_file('../index', $engine->paths, 'layout/'), "$FindBin::Bin/templates/index.html";
 
-    is_deeply [$engine->_find_template_file('layout/footer', $engine->path)],
+    is_deeply [$engine->_find_template_file('layout/footer', $engine->paths)],
               ["$FindBin::Bin/templates/layout/footer.html", "$FindBin::Bin/templates"];
 
     # traverse out
-    is $engine->_find_template_file('../../../../../../../../../../etc/passwd', $engine->path), undef;
+    is $engine->_find_template_file('../../../../../../../../../../etc/passwd', $engine->paths), undef;
 
     # null char attack
-    is $engine->_find_template_file('index.secret'."\x00", $engine->path), undef;
+    is $engine->_find_template_file('index.secret'."\x00", $engine->paths), undef;
 
 };
 
@@ -42,26 +42,26 @@ subtest '_load_template' => sub {
 
     my $c = $engine->template('index');
 
-    is $engine->_load_template('index', $engine->path, $c)->find('h1')->text, 'Hello Plift';
+    is $engine->_load_template('index', $engine->paths, $c)->find('h1')->text, 'Hello Plift';
     is $c->relative_path_prefix, '.';
 
     my $document = $c->document->get(0);
     isa_ok $document, 'XML::LibXML::Document', 'ctx->document';
 
-    is $engine->_load_template('layout/footer', $engine->path, $c)->filter('footer')->size, 1;
+    is $engine->_load_template('layout/footer', $engine->paths, $c)->filter('footer')->size, 1;
     is $c->relative_path_prefix, 'layout';
 
-    is $engine->_load_template('./header', $engine->path, $c)->filter('header')->size, 1;
+    is $engine->_load_template('./header', $engine->paths, $c)->filter('header')->size, 1;
     is $c->relative_path_prefix, 'layout';
 
-    is $engine->_load_template('./footer/widget', $engine->path, $c)->filter('div')->size, 1;
+    is $engine->_load_template('./footer/widget', $engine->paths, $c)->filter('div')->size, 1;
     is $c->relative_path_prefix, 'layout/footer';
 
-    note $engine->_load_template('layout', $engine->path, $c)->as_html;
-    is $engine->_load_template('layout', $engine->path, $c)->find('div')->size, 2;
+    note $engine->_load_template('layout', $engine->paths, $c)->as_html;
+    is $engine->_load_template('layout', $engine->paths, $c)->find('div')->size, 2;
     is $c->relative_path_prefix, '.';
 
-    ok $engine->_load_template('layout', $engine->path, $c)->document->get(0)
+    ok $engine->_load_template('layout', $engine->paths, $c)->document->get(0)
                                                           ->isSameNode($document);
 
 };

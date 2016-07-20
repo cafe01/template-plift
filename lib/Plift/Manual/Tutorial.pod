@@ -15,7 +15,7 @@ reusable components/plugins.
 
 =head1 HELLO WORLD
 
-Lets start by the classic "Hello World" example.
+Lets start with the classic "Hello World" example.
 
 First our template file, C< index.html >:
 
@@ -62,11 +62,11 @@ Under the hood, Plift uses L<XML::LibXML::jQuery> to manipulate HTML. The render
 directive in the example is equivalent to the following code:
 
     my $data_value = $context->get('hello_message');
-    $document->find('h1')->text($data_value);
+    $root_element->find('h1')->text($data_value);
 
 =head1 THE PATH
 
-In the above example Plift used the default config for the 'path' option, which
+In the above example Plift used the default config for the 'paths' option, which
 is the current working dir. In a real world application you usualy pass some pre
 defined template path.
 
@@ -75,7 +75,7 @@ order. You can use that funcionality to create a simple way to "extend" the
 website "theme" or "skin":
 
     my $plift = Plift->new(
-        path => [
+        paths => [
             '/myapp/website-foo/skin/templates/',
             '/myapp/share/skin/base/templates/'
         ]
