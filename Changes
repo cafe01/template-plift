@@ -2,6 +2,9 @@ Revision history for Perl extension Plift
 
 {{$NEXT}}
 
+    - implemented snippets: dynamically loaded code blocks
+    - renamed option 'path' to 'paths'
+
 0.03 2016-07-20T19:09:47Z
 
     - implemented Plift::render(), Plift::load_components()

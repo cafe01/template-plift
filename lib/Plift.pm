@@ -17,6 +17,8 @@ use constant {
     XML_DTD_NODE           => 14
 };
 
+has 'helper', is => 'ro';
+has 'wrapper', is => 'ro';
 has 'paths', is => 'ro', default => sub { ['.'] };
 has 'snippet_namespaces', is => 'ro', default => sub { [] };
 has 'plugins', is => 'ro', default => sub { [] };
@@ -70,10 +72,12 @@ sub template {
     # path copy for the load_template closure
     # this way we do not expose the engine nor the path to the context object
     my @paths = @{ $options->{paths} || $self->paths };
-    my @ns = @{ $options->{snippet_namespaces} || $self->snippet_namespaces };
+    my @ns    = @{ $options->{snippet_namespaces} || $self->snippet_namespaces };
 
     Plift::Context->new(
         template => $name,
+        helper   => $options->{helper}   || $self->helper,
+        wrapper  => $options->{wrapper}  || $self->wrapper,
         encoding => $options->{encoding} || $self->encoding,
         handlers => [@{ $self->{handlers}}],
         load_template => sub {

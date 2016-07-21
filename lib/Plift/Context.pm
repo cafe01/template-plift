@@ -5,6 +5,8 @@ use Carp;
 use Scalar::Util qw/ blessed /;
 use XML::LibXML::jQuery;
 
+has 'helper', is => 'ro';
+has 'wrapper', is => 'ro';
 has 'template', is => 'ro', required => 1;
 has 'encoding', is => 'ro', default => 'UTF-8';
 has 'loop_var', is => 'ro', default => 'loop';
@@ -14,13 +16,28 @@ has '_load_template', is => 'ro', required => 1, init_arg => 'load_template';
 has '_load_snippet', is => 'ro', required => 1, init_arg => 'load_snippet';
 
 
-has 'document', is => 'rw';
+has 'document', is => 'rw', init_arg => undef;
 has 'relative_path_prefix', is => 'rw', init_arg => undef;
 has 'is_rendering', is => 'rw', init_arg => undef, default => 0;
 
 has '_data_stack',   is => 'ro', default => sub { [] };
 has '_directive_stack',   is => 'ro', default => sub { [] };
 
+
+sub AUTOLOAD {
+    my $self = shift;
+
+    my ($package, $method) = our $AUTOLOAD =~ /^(.+)::(.+)$/;
+    Carp::croak "Undefined subroutine &${package}::$method called"
+        unless Scalar::Util::blessed $self && $self->isa(__PACKAGE__);
+
+    return if $method eq 'DESTROY';
+
+    Carp::croak qq{Can't locate object method "$method" via package "$package"}
+        unless $self->helper && $self->helper->can($method);
+
+    $self->helper->$method(@_);
+}
 
 
 sub data {
@@ -329,8 +346,17 @@ sub render  {
 
     $self->is_rendering(1);
 
-    # process tempalte file
+    # process template
     my $element = $self->process_template($self->template);
+
+    # apply wrapper
+    if ($self->wrapper) {
+
+        my $wrapper_document = $self->process_template($self->wrapper);
+        $wrapper_document->insert_after($element);
+        $wrapper_document->find('#content')->append($element);
+        $element = $wrapper_document;
+    }
 
     # rewind directive stack, then render
     $self->rewind_directive_stack;

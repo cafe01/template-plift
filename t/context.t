@@ -88,6 +88,27 @@ subtest 'render' => sub {
 };
 
 
+subtest 'helper' => sub {
+
+    my $engine = Plift->new(
+        paths  => ["$FindBin::Bin/templates"],
+        helper => Some::Class->new
+    );
+
+    $engine->add_handler({
+        name => 'test_helper',
+        tag => 'section',
+        handler => sub {
+            my ($el, $ctx) = @_;
+            $el->text($ctx->foo_method);
+        }
+    });
+
+    my $ctx = $engine->template('section');
+    my $doc = $ctx->render;
+    is $doc->find('section')->text, 'foo', 'context helper';
+};
+
 done_testing;
 
 
