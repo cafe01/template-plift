@@ -47,7 +47,7 @@ That will render (not surprisingly) the following text into C< $html >:
         <h1>Hello World!</h1>
     </section>
 
-Ok, now lets explain what C< $plift->render > did. As you can see, the first
+Ok, now lets explain what C<< $plift->render >> did. As you can see, the first
 argument is the name of the template file, without the C<.html> extension. The second
 argument C<\%data> is a reference to a hash of data to make available for
 templates. Finally, the third argument C<\@directives> is a reference to a list of
@@ -89,23 +89,23 @@ is no "template inheritante" or anything like that.
 
 =head1 THE CONTEXT
 
-Before proceding, we must learn about the Plift::Context object. At a high level,
-you can think of the context object as a representation of the template that we
-are procesing. Thats why we create a new context via L<Plift/template>, and
-render it via L<Plift::Context/render>. Which gives us a nice syntax:
+Before proceding, we must learn about the L<Plift::Context> object. At a high level,
+you can think of it as a representation of the template that we are procesing.
+Thats why we create a new context via L<Plift/template>, and render it via
+L<Plift::Context/render>. Which gives us a nice syntax:
 
     $document = $plift->template('foo')
                       ->at(\@directives)
                       ->render(\%data);
 
 Semantics aside, a L<Plift::Context> instance is the storage for all things
-related to the current processing.. context. It's meant to live only for the
-duration of that template rendering (usualy a web request). In contrast to the
-actual L<Plift> instance that is meant to live for the whole application life.
+related to the current processing context. It's meant to live only for the
+duration of that template rendering operation (usualy a web request). In contrast
+to the actual L<Plift> instance that is meant to live for the whole application life.
 
-The methods L<Plift/render> and L<Plift/process> methods are just wrappers
-around L<Plift::Context/set>, L<Plift::Context/at> and L<Plift::Context/render>.
-The code snipped given above is equivalent to:
+The methods L<Plift/render> and L<Plift/process> are just shortcuts for
+L<Plift/teamplate>, L<Plift::Context/at> and L<Plift::Context/render>.
+The code snipped above is equivalent to:
 
     $document = $plift->process('index', \%data, \@directives );
 
@@ -123,8 +123,14 @@ object. Directives are added using the method L<Plift::Context/at>.
 
 =head2 Scalar - Interpolate data value
 
-    $tpl->set
-    $tpl->at( '.first-name' => 'user.first_name' );
+    # directive
+    '.first-name' => 'user.first_name'
+
+    # data
+    user => {
+        first_name => 'Carlos',
+        ...
+    }
 
 This is the most common directive, where the selector points to a data point,
 like C< '.first-name' => 'user.first_name' >. By default the data value is

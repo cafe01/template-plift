@@ -18,6 +18,7 @@ use constant {
 };
 
 has 'paths', is => 'ro', default => sub { ['.'] };
+has 'snippet_namespaces', is => 'ro', default => sub { [] };
 has 'plugins', is => 'ro', default => sub { [] };
 has 'encoding', is => 'rw', default => 'UTF-8';
 has 'debug', is => 'rw', default => sub { $ENV{PLIFT_DEBUG} };
@@ -32,16 +33,18 @@ has '_cache', is => 'ro', default => sub { {} };
 sub BUILD {
     my $self = shift;
 
-    # init components
-    # builtin directives
-    my @components = qw/ Handler::Include  Handler::Wrap Handler::Render/;
+    # builtin handlers
+    my @components = qw/
+        Handler::Include
+        Handler::Wrap
+        Handler::Render
+        Handler::Snippet
+    /;
 
     # plugins
-    push @components, map { $_ =~ /^\+/ ? $_ : 'Plugin::'.$_ }
+    push @components, map { /^\+/ ? $_ : 'Plugin::'.$_ }
                       @{ $self->plugins };
 
-
-    # instantiate and init
     $self->load_components(@components);
 }
 
@@ -67,6 +70,7 @@ sub template {
     # path copy for the load_template closure
     # this way we do not expose the engine nor the path to the context object
     my @paths = @{ $options->{paths} || $self->paths };
+    my @ns = @{ $options->{snippet_namespaces} || $self->snippet_namespaces };
 
     Plift::Context->new(
         template => $name,
@@ -75,7 +79,10 @@ sub template {
         load_template => sub {
             my ($ctx, $name) = @_;
             $self->_load_template($name, \@paths, $ctx)
-        }
+        },
+        load_snippet => sub {
+            $self->_load_snippet(\@ns, @_);
+        },
     );
 }
 
@@ -287,6 +294,27 @@ sub _find_template_file {
     return;
 }
 
+sub _load_snippet {
+    my ($self, $ns, $name, $params) = @_;
+
+    my $class_sufixx = _camelize($name);
+    my @try_classes = map { join '::', $_, $class_sufixx } @$ns;
+    my $snippet_class = Class::Load::load_first_existing_class @try_classes;
+
+
+    $snippet_class->new($params);
+}
+
+# borrowed from Mojo::Util :)
+sub _camelize {
+    my $str = shift;
+    return $str if $str =~ /^[A-Z]/;
+
+    # CamelCase words
+    return join '::', map {
+        join( '', map { ucfirst lc } split '_' )
+    } split '-', $str;
+}
 
 
 1;
@@ -401,6 +429,8 @@ XPath expression matching the nodes bound this handler.
 
 =back
 
+See L<Plift::Manual::CustomHandler>.
+
 =head2 template
 
     $context = $plift->template($template_name, \%options)
@@ -418,7 +448,7 @@ A new context is created via  L</template>, rendering directives are set via
 L<Plift::Context/at> and finally the template is rendered via L<Plift::Context/render>.
 Returns a L<XML::LibXML::jQuery> object representing the final processed document.
 
-    my \%data = (
+    my %data = (
         fullname => 'John Doe',
         contact => {
             phone => 123,
@@ -436,7 +466,7 @@ Returns a L<XML::LibXML::jQuery> object representing the final processed documen
             ]
     );
 
-    my $document = $plift->process('index', $data, \@directives);
+    my $document = $plift->process('index', \%data, \@directives);
 
     print $document->as_html;
 
@@ -451,9 +481,10 @@ A shortcut for C<< $plift->process()->as_html >>.
     $plift = $plift->load_components(@components)
 
 Loads one or more Plift components. For each component, we build a class name
-by prepending C<Plift::> to the component name, then we load the class, instantiate
-a new object and call C<< $component->register($self) >> on it.
+by prepending C<Plift::> to the component name, then load the class, instantiate
+a new object and call C<< $component->register($self) >>.
 
+See L<Plift::Manual::CustomHandler>.
 
 =head1 SIMILAR PROJECTS
 
@@ -468,11 +499,12 @@ encourage less business logic to be embedded in the templates.
 
 =item L<Template::Pure>
 
-Perl reimplementation of Pure.js. This module inspired Plift's render directives.
+Perl implementation of Pure.js. This module inspired Plift's render directives.
 
 =item L<Template::Semantic>
 
-Similar to Template::Pure, but mixes data with render directives.
+Similar to Template::Pure, but the render directives points to the actual data
+values, instead of datapoints. Which IMHO makes the work harder.
 
 =item L<Template::Flute>
 

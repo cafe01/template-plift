@@ -11,6 +11,7 @@ has 'loop_var', is => 'ro', default => 'loop';
 has 'handlers', is => 'ro', default => sub { [] };
 has 'internal_id_attribute', is => 'ro', default => 'data-plift-id';
 has '_load_template', is => 'ro', required => 1, init_arg => 'load_template';
+has '_load_snippet', is => 'ro', required => 1, init_arg => 'load_snippet';
 
 
 has 'document', is => 'rw';
@@ -467,6 +468,32 @@ sub _parse_matchspec_modifiers {
     $_[1] =~ s/(?<=[\w\.\#\*\]])[+]+$//g;
 
     \%mod;
+}
+
+
+sub run_snippet {
+    my ($self, $name, $element, $params, $args) = @_;
+
+    # instantiate
+    ($name, my $action) = split /\//, $name;
+    my $snippet = $self->snippet($name, $params);
+
+    # action
+    $action ||= 'process';
+    my $method = $snippet->can($action);
+
+    die "Invalid action '$action' for snippet '$name'."
+        unless $method;
+
+    # run
+    $snippet->$method($element, $args && ref $args eq 'ARRAY'? @$args : ());
+}
+
+sub snippet {
+    my ($self, $name, $params) = @_;
+    $params ||= {};
+    $params->{context} = $self;
+    $self->_load_snippet->($name, $params);
 }
 
 
