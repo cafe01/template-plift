@@ -2,8 +2,18 @@ Revision history for Perl extension Plift
 
 {{$NEXT}}
 
-    - implemented snippets: dynamically loaded code blocks
-    - renamed option 'path' to 'paths'
+0.04 2016-07-21T04:14:15Z
+
+    * implemented 'wrapper' option
+      - a template used for final wrapper, usualy the website layout
+      - avoids '<x-wrap>' on every template file
+    * implemented context 'helper'
+      - optional object of which methods get AUTOLOADed from
+      - meant as a gateway from Plift to the rest of the system
+        - (e.g. the current web request controller instance)
+
+    * implemented snippets: dynamically loaded code blocks
+    * renamed option 'path' to 'paths'
 
 0.03 2016-07-20T19:09:47Z
 

@@ -93,6 +93,8 @@ Valid parameters are:
 
     XPath expression matching the nodes bound this handler.
 
+See [Plift::Manual::CustomHandler](https://metacpan.org/pod/Plift::Manual::CustomHandler).
+
 ## template
 
     $context = $plift->template($template_name, \%options)
@@ -110,7 +112,7 @@ A new context is created via  ["template"](#template), rendering directives are 
 ["at" in Plift::Context](https://metacpan.org/pod/Plift::Context#at) and finally the template is rendered via ["render" in Plift::Context](https://metacpan.org/pod/Plift::Context#render).
 Returns a [XML::LibXML::jQuery](https://metacpan.org/pod/XML::LibXML::jQuery) object representing the final processed document.
 
-    my \%data = (
+    my %data = (
         fullname => 'John Doe',
         contact => {
             phone => 123,
@@ -128,7 +130,7 @@ Returns a [XML::LibXML::jQuery](https://metacpan.org/pod/XML::LibXML::jQuery) ob
             ]
     );
 
-    my $document = $plift->process('index', $data, \@directives);
+    my $document = $plift->process('index', \%data, \@directives);
 
     print $document->as_html;
 
@@ -143,8 +145,10 @@ A shortcut for `$plift->process()->as_html`.
     $plift = $plift->load_components(@components)
 
 Loads one or more Plift components. For each component, we build a class name
-by prepending `Plift::` to the component name, then we load the class, instantiate
-a new object and call `$component->register($self)` on it.
+by prepending `Plift::` to the component name, then load the class, instantiate
+a new object and call `$component->register($self)`.
+
+See [Plift::Manual::CustomHandler](https://metacpan.org/pod/Plift::Manual::CustomHandler).
 
 # SIMILAR PROJECTS
 
@@ -157,11 +161,12 @@ This is a list of modules (that I know of) that pursue similar goals:
 
 - [Template::Pure](https://metacpan.org/pod/Template::Pure)
 
-    Perl reimplementation of Pure.js. This module inspired Plift's render directives.
+    Perl implementation of Pure.js. This module inspired Plift's render directives.
 
 - [Template::Semantic](https://metacpan.org/pod/Template::Semantic)
 
-    Similar to Template::Pure, but mixes data with render directives.
+    Similar to Template::Pure, but the render directives points to the actual data
+    values, instead of datapoints. Which IMHO makes the work harder.
 
 - [Template::Flute](https://metacpan.org/pod/Template::Flute)
 
