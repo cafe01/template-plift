@@ -62,8 +62,13 @@ subtest '_load_template' => sub {
     is $c->relative_path_prefix, '.';
 
     ok $engine->_load_template('layout', $engine->paths, $c)->document->get(0)
-                                                          ->isSameNode($document);
+                                                            ->isSameNode($document);
 
+    # inline
+    is $engine->_load_template(\'<div/>', $engine->paths, $c)->filter('div')->size, 1;
+    ok $engine->_load_template(\'<div/>', $engine->paths, $c)
+              ->document->get(0)
+              ->isSameNode($document);
 };
 
 

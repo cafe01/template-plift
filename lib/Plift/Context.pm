@@ -133,6 +133,9 @@ my $internal_id = 1;
 sub internal_id {
     my ($self, $node) = @_;
 
+    $node = $node->get(0)
+        if $node->isa('XML::LibXML::jQuery');
+
     unless ($node->hasAttribute($self->internal_id_attribute)) {
         $node->setAttribute($self->internal_id_attribute, $internal_id++);
     }

@@ -2,10 +2,14 @@ Revision history for Perl extension Plift
 
 {{$NEXT}}
 
+    * added support for inline template
+      - pass a scalarref with html source instead of template name
+      - needed since not all applications stores the templates as files
+
 0.04 2016-07-21T04:14:15Z
 
     * implemented 'wrapper' option
-      - a template used for final wrapper, usualy the website layout
+      - a template used for final wrapper, usually the website layout
       - avoids '<x-wrap>' on every template file
     * implemented context 'helper'
       - optional object of which methods get AUTOLOADed from
@@ -22,7 +26,7 @@ Revision history for Perl extension Plift
 
 0.02 2016-07-18T22:12:26Z
 
-    - imlemented <x-render> processing instructions
+    - implemented <x-render> processing instructions
       - creates render directives dynamically
     - implemented match modifiers to append+, +prepend and ^replace the element
       - like Template::Pure

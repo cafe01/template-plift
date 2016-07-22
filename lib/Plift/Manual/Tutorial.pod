@@ -9,7 +9,7 @@ pure HTML templates to learn how to render data using directives.
 Then you'll learn how to use the builtin processing instructions in your
 template files.
 
-Finnaly, I'll show how to create your own custom processing instructions
+Finally, I'll show how to create your own custom processing instructions
 (triggered by custom tags/attributes) and how to bundle them in the form of
 reusable components/plugins.
 
@@ -104,7 +104,7 @@ duration of that template rendering operation (usualy a web request). In contras
 to the actual L<Plift> instance that is meant to live for the whole application life.
 
 The methods L<Plift/render> and L<Plift/process> are just shortcuts for
-L<Plift/teamplate>, L<Plift::Context/at> and L<Plift::Context/render>.
+L<Plift/template>, L<Plift::Context/at> and L<Plift::Context/render>.
 The code snipped above is equivalent to:
 
     $document = $plift->process('index', \%data, \@directives );

@@ -8,6 +8,8 @@ use Path::Tiny ();
 use XML::LibXML::jQuery ();
 use Carp;
 use Plift::Context;
+use Digest::MD5 qw/ md5_hex /;
+use namespace::clean;
 
 our $VERSION = "0.04";
 
@@ -19,7 +21,7 @@ use constant {
 
 has 'helper', is => 'ro';
 has 'wrapper', is => 'ro';
-has 'paths', is => 'ro', default => sub { ['.'] };
+has 'paths', is => 'rw', default => sub { ['.'] };
 has 'snippet_namespaces', is => 'ro', default => sub { [] };
 has 'plugins', is => 'ro', default => sub { [] };
 has 'encoding', is => 'rw', default => 'UTF-8';
@@ -63,6 +65,12 @@ sub load_components {
         $plugin->register($self);
     }
 }
+
+sub has_template {
+    my ($self, $name) = @_;
+    return !! $self->_find_template_file($name, $self->paths);
+}
+
 
 
 sub template {
@@ -162,47 +170,70 @@ sub get_handler {
 
 
 sub _load_template {
-    my ($self, $name, $paths, $ctx) = @_;
+    my ($self, $template, $paths, $ctx) = @_;
 
-    # resolve template name to file
-    my ($template_file, $template_path) = $self->_find_template_file($name, $paths, $ctx->relative_path_prefix);
-    die sprintf "Can't find a template file for template '%s'. Tried:\n%s\n", $name, join(",\n", @$paths)
-        unless $template_file;
+    my ($tpl_source, $tpl_etag, $tpl_file, $tpl_path, $cache_key);
 
-    # update contex relative path
-    # $ctx->push_file($template_file);
-    $ctx->relative_path_prefix($template_file->parent->relative($template_path));
+    # inline template
+    if (ref $template) {
 
-    # cached file
-    my $stat = $template_file->stat;
-    my $mtime = $stat->mtime;
+        $tpl_source = $$template;
+        $tpl_etag = md5_hex($tpl_source);
+        $cache_key = 'inline:'.$tpl_etag;
+    }
+
+    # file template
+    else {
+
+        # resolve template file
+        ($tpl_file, $tpl_path) = $self->_find_template_file($template, $paths, $ctx->relative_path_prefix);
+        die sprintf "Can't find a template file for template '%s'. Tried:\n%s\n", $template, join(",\n", @$paths)
+            unless $tpl_file;
+
+        # update contex relative path
+        $ctx->relative_path_prefix($tpl_file->parent->relative($tpl_path));
+
+        $tpl_etag = $tpl_file->stat->mtime;
+        $cache_key = $tpl_file->stringify;
+    }
+
+    # cached template
     my $cache = $self->_cache;
     my $dom;
 
     # get from cache
-    if ($self->enable_cache && (my $entry = $cache->{"$template_file"})) {
+    if ($self->enable_cache && (my $entry = $cache->{$cache_key})) {
 
-        if ($entry->{mtime} == $mtime) {
+        # cache hit
+        if ($entry->{etag} eq $tpl_etag) {
+
             $dom = $entry->{dom}->clone->contents;
             $dom->append_to($dom->document);
             $entry->{hits} += 1;
             $entry->{last_hit} = time;
-            # printf STDERR "# Plift cache hit: '$template_file' => %d hits\n", $entry->{hits};
+            # printf STDERR "# Plift cache hit: '$tpl_file' => %d hits\n", $entry->{hits};
         }
+
+        # invalidade cache entry
         else {
-            delete $cache->{"$template_file"};
+            delete $cache->{$cache_key};
         }
     }
 
     unless ($dom) {
 
         # max file size
-        die sprintf("Template file '%s' exceeds the max_file_size option! (%d > %d)\n", $template_file, $stat->size, $self->max_file_size)
-            if $stat->size > $self->max_file_size;
+        my $tpl_size = defined $tpl_file ? $tpl_file->stat->size : length $tpl_source;
+        die sprintf("Template '%s' exceeds the max_file_size option! (%d > %d)\n", $cache_key, $tpl_size, $self->max_file_size)
+            if$tpl_size > $self->max_file_size;
 
         # parse source
-        $dom = XML::LibXML::jQuery->new($ctx->encoding eq 'UTF-8' ? $template_file->slurp_utf8
-                                                                  : $template_file->slurp( binmode => ":unix:encoding(".$self->encoding.")"));
+        if (defined $tpl_file) {
+            $tpl_source = $ctx->encoding eq 'UTF-8' ? $tpl_file->slurp_utf8
+                                                    : $tpl_file->slurp( binmode => ":unix:encoding(".$self->encoding.")")
+        }
+
+        $dom = XML::LibXML::jQuery->new($tpl_source);
 
         # cache it
         if ($self->enable_cache) {
@@ -216,9 +247,9 @@ sub _load_template {
                 delete $cache->{$least_used[0]};
             }
 
-            $cache->{"$template_file"} = {
+            $cache->{$cache_key} = {
                 dom   => $dom->document->clone,
-                mtime => $mtime,
+                etag => $tpl_etag,
                 hits => 0,
                 last_hit => 0,
             };
@@ -261,6 +292,8 @@ sub _load_template {
     else {
         $ctx->document($dom->document);
     }
+
+    # TODO apply input filters
 
     $dom;
 }
