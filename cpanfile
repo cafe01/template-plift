@@ -5,6 +5,7 @@ on 'test' => sub {
 };
 
 requires 'Moo';
+requires 'URI';
 requires 'namespace::clean';
 requires 'Class::Load';
 requires 'Path::Tiny';
