@@ -2,7 +2,7 @@ use strict;
 use Test::More 0.98;
 use FindBin;
 use Plift;
-
+use Test::Exception;
 
 my $engine = Plift->new(
     paths => ["$FindBin::Bin/templates", "$FindBin::Bin/other_templates"],
@@ -71,10 +71,39 @@ subtest 'get()' => sub {
     is $ctx->get('complex.hash_of_array.items.0'), 'foo', 'complex.hash_of_array.items.0.value';
     is $ctx->get('object.foo_method'), $object->foo_method, 'object.method';
     is $ctx->get('code'), 'foo', 'code';
+    dies_ok { $ctx->get('code.foo') } 'traverse thru code';
     is $ctx->get('user.name'), 'First Last', 'code with data args';
     is $ctx->get('user.alt_name'), 'First Last', 'code with data args';
     is $ctx->get('hash_from_code.value'), 'foo', 'hash_from_code.value';
     is $ctx->get('object_from_code.foo_method'), $object->foo_method, 'object_from_code.method';
+};
+
+
+subtest 'at' => sub {
+
+    my $c = $engine->template('index');
+
+    $c->at(one => '1')
+      ->at([ two => 2, three => 3 ])
+      ->push_at('article', 'posts')
+      ->at('.title' => 'title')
+      ->at(['.content' => 'content', '.author' => 'author'])
+      ->pop_at
+      ->at(four => 4);
+
+    is_deeply $c->directives->{directives}, [
+        one => 1,
+        two => 2,
+        three => 3,
+        article => {
+            posts => [
+                '.title' => 'title',
+                '.content' => 'content',
+                '.author' => 'author'
+            ]
+        },
+        four => 4
+    ];
 };
 
 
