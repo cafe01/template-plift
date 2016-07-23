@@ -2,6 +2,8 @@ Revision history for Perl extension Plift
 
 {{$NEXT}}
 
+0.06 2016-07-23T18:13:21Z
+
     [ PERFORMANCE ]
     * avoid calling Path::Tiny realpath + subsumes
       - only if template name has '../'
