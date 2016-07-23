@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/cafe01/template-plift.svg?branch=master)](https://travis-ci.org/cafe01/template-plift)
+[![Build Status](https://travis-ci.org/cafe01/template-plift.svg?branch=master)](https://travis-ci.org/cafe01/template-plift) [![Coverage Status](https://img.shields.io/coveralls/cafe01/template-plift/master.svg?style=flat)](https://coveralls.io/r/cafe01/template-plift?branch=master)
 # NAME
 
 Plift - Designer friendly, safe, extensible HTML template engine.
