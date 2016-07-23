@@ -11,4 +11,4 @@ requires 'namespace::clean';
 requires 'Class::Load';
 requires 'Path::Tiny';
 requires 'Scalar::Util';
-requires 'XML::LibXML::jQuery', '0.07';
+requires 'XML::LibXML::jQuery', '0.08';
