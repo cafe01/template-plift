@@ -2,6 +2,19 @@ Revision history for Perl extension Plift
 
 {{$NEXT}}
 
+    [ PERFORMANCE ]
+    * avoid calling Path::Tiny realpath + subsumes
+      - only if template name has '../'
+    * builtin handlers now calling attribute-related methods directly on libxml node
+      - I know.. micro optimization.. just a NYTProf itch.
+    * resolving relative path prefix only when template name is relative :)
+
+    [ BUG FIX ]
+    * fixed relative path resolution
+      - now properly localizing current file/path
+
+
+
 0.05 2016-07-23T02:34:37Z
 
     * added support for inline template

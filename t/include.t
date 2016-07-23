@@ -17,7 +17,7 @@ subtest 'include' => sub {
         include_all  => 1
     });
 
-    note $doc->as_html;
+    # note $doc->as_html;
     # note "IF SECTION:".$doc->find('if section')->as_html.')';
     is $doc->find('header, footer')->size, 2;
     is $doc->find('x-include, *[data-plift-include]')->size, 0;

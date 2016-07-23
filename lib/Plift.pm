@@ -184,13 +184,24 @@ sub _load_template {
     # file template
     else {
 
+        # add relative prefix
+        # (only './foo' and '../foo' are considered relative, not plain 'foo')
+        if (defined $ctx->{current_file} && $template =~ /^\.\.?\//) {
+            my $current_file = $ctx->{current_file};
+            my $current_path = $ctx->{current_path};
+            my $prefix = $current_file->parent->relative($current_path);
+            $template = "$prefix/$template"
+                unless $prefix eq '.';
+        }
+
         # resolve template file
-        ($tpl_file, $tpl_path) = $self->_find_template_file($template, $paths, $ctx->relative_path_prefix);
+        ($tpl_file, $tpl_path) = $self->_find_template_file($template, $paths);
         die sprintf "Can't find a template file for template '%s'. Tried:\n%s\n", $template, join(",\n", @$paths)
             unless $tpl_file;
 
-        # update contex relative path
-        $ctx->relative_path_prefix($tpl_file->parent->relative($tpl_path));
+        # update contex current file/path
+        $ctx->{current_file} = $tpl_file;
+        $ctx->{current_path} = $tpl_path;
 
         $tpl_etag = $tpl_file->stat->mtime;
         $cache_key = $tpl_file->stringify;
@@ -286,7 +297,7 @@ sub _load_template {
                     @{ $dom->{nodes} };
 
         # reinstantitate on new document
-        $dom = XML::LibXML::jQuery->new(\@nodes);
+        $dom = $dom->_new_nodes(\@nodes, undef, $existing_document);
     }
 
     # 1st tempalte loaded, set contex document
@@ -300,14 +311,7 @@ sub _load_template {
 }
 
 sub _find_template_file {
-    my ($self, $template_name, $paths, $relative_prefix) = @_;
-    $relative_prefix ||= '';
-
-    # append prefix to relative paths (Only './foo' and '../foo' are considered relative, not plain 'foo')
-    $template_name = "$relative_prefix/$template_name"
-        if $template_name =~ /^\.\.?\//
-           && defined $relative_prefix
-           && length $relative_prefix;
+    my ($self, $template_name, $paths) = @_;
 
     # clean \x00 char that can be used to truncate our string
     $template_name =~ tr/\x00//d;

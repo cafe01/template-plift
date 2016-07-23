@@ -17,7 +17,6 @@ has '_load_snippet', is => 'ro', required => 1, init_arg => 'load_snippet';
 
 
 has 'document', is => 'rw', init_arg => undef;
-has 'relative_path_prefix', is => 'rw', init_arg => undef;
 has 'is_rendering', is => 'rw', init_arg => undef, default => 0;
 
 has '_data_stack',   is => 'ro', default => sub { [] };
@@ -90,10 +89,7 @@ sub rewind_directive_stack {
         my $parent_selector = $stack->[-1]->{selector};
 
         # remove modifiers
-        # printf STDERR "# SEL BEF: $parent_selector\n";
         $self->_parse_matchspec_modifiers($parent_selector);
-        # printf STDERR "# SEL AFT: $parent_selector\n";
-        # printf STDERR "# SEL AFT: $stack->[-1]->{selector}\n";
 
         while ($parent->get(0)->nodeType != 9) {
 
@@ -270,6 +266,13 @@ sub get {
 sub process_template {
     my ($self, $template_name) = @_;
 
+    # TODO this is an action at a distance... find a better solution
+    # localize current_file and current_path
+    # load_template sets it, process_element can recurse into load_template
+    # thats for related paths to work
+    local $self->{current_file} = $self->{current_file};
+    local $self->{current_path} = $self->{current_path};
+
     my $element = $self->load_template($template_name);
     $self->process_element($element);
 
@@ -288,7 +291,7 @@ sub process_element {
 
     # match elements
     my $callback = sub {
-        $self->_dispatch_handlers(@_);
+        $self->_dispatch_handlers(@_, $element->_new_nodes([$_[1]]));
     };
 
     # xpath
@@ -301,11 +304,8 @@ sub process_element {
 }
 
 sub _dispatch_handlers {
-    my ($self, $i, $node) = @_;
+    my ($self, $i, $node, $el) = @_;
     my $tagname = $node->localname;
-    my $el = XML::LibXML::jQuery->new($node);
-
-    # printf STDERR "# el($i): %s\n", $el->as_html;
 
     foreach my $handler (@{ $self->handlers }) {
 
@@ -330,7 +330,6 @@ sub _dispatch_handlers {
         }
 
         # dispatch
-        # printf STDERR "# dispatching: <%s /> -> '%s'\n", $tagname, $handler->{name};
         $handler->{sub}->($el, $self)
             if $handler_match;
     }

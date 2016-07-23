@@ -15,7 +15,7 @@ my $doc = $ctx->render({
     header => 'header snippet'
 });
 
-note $doc->as_html;
+# note $doc->as_html;
 
 is $doc->find('[data-plift], [data-snippet], [data-plift-snippet]')->size, 0;
 is $doc->find('header')->text, 'header snippet', 'snippet context';

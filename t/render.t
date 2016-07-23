@@ -166,7 +166,7 @@ sub test_render_reference_tags {
     is_deeply $tpl->directives->{directives}, [];
     my $doc = $tpl->render(\%data);
 
-    note $doc->as_html;
+    # note $doc->as_html;
 
     is $doc->find('x-render')->size, 0;
     is $doc->find('#name')->text, "Hello $data{fullname}";

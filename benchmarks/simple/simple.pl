@@ -3,7 +3,8 @@ use strict;
 use 5.010;
 use Benchmark ':all';
 use FindBin;
-use lib "$FindBin::Bin/../../lib";
+use lib "$ENV{HOME}/workspace/XML-LibXML-jQuery/lib";
+use lib "$ENV{HOME}/workspace/Plift/lib";
 use Plift;
 use Template::Pure;
 use Path::Tiny;
@@ -12,7 +13,7 @@ use HTML::Template;
 use XML::LibXML::jQuery;
 
 
-my $plift = Plift->new( paths => ["$FindBin::Bin/plift"] );
+my $plift = Plift->new( paths => ["$FindBin::Bin/plift"], enable_cache => 1 );
 my $tt = Template->new( INCLUDE_PATH => ["$FindBin::Bin/tt"] );
 
 
@@ -29,7 +30,7 @@ my @jquery_cache = map {$_->document->clone } jquery_parse_files();
 cmpthese(shift || 5000, {
     Plift => \&plift,
     # PliftWrapper => \&plift_wrapper,
-    # 'HTML::Template'  => \&html_template,
+    'HTML::Template'  => \&html_template,
     # 'Template::Pure'  => \&pure,
     # 'Template::Toolkit'  => \&tt,
     # read_files => \&read_files,
@@ -41,18 +42,18 @@ cmpthese(shift || 5000, {
 
 sub plift {
     my $doc = $plift->process("index-wrap");
-    my $output = $doc->as_html;
+    # my $output = $doc->as_html;
 }
 
 sub plift_wrapper {
     my $doc = $plift->template("index", { wrapper => 'layout'})->render;
-    my $output = $doc->as_html;
+    # my $output = $doc->as_html;
 }
 
 sub html_template {
 
     my $html_template = HTML::Template->new( path => ["$FindBin::Bin/html_template"], filename => 'layout.html' );
-    my $output = $html_template->output;
+    # my $output = $html_template->output;
 }
 
 
