@@ -17,13 +17,14 @@ sub register {
 
 sub include {
     my ($element, $ctx) = @_;
+    my $node = $element->get(0);
 
-    my $is_tag = $element->tagname eq 'x-include';
-    my $template_name = $is_tag ? $element->attr('template')
-                                : $element->attr('data-plift-include');
+    my $is_tag = $node->localname eq 'x-include';
+    my $template_name = $is_tag ? $node->getAttribute('template')
+                                : $node->getAttribute('data-plift-include');
 
-    my $if = $element->attr('if') || $element->attr('data-if');
-    my $unless = $element->attr('unless') || $element->attr('data-unless');
+    my $if = $node->getAttribute('if') || $node->getAttribute('data-if');
+    my $unless = $node->getAttribute('unless') || $node->getAttribute('data-unless');
 
     # no template name
     unless ($template_name) {
@@ -47,7 +48,7 @@ sub include {
 
     # remove our attributes
     unless ($is_tag) {
-        $element->remove_attr($_) for
+        $node->removeAttribute($_) for
             qw/ data-plift-include data-if data-unless if unless/;
     }
 
@@ -55,9 +56,11 @@ sub include {
 
     # replace or append
     if ($is_tag) {
+
         $element->replace_with($dom);
     }
     else {
+
         $element->append($dom);
     }
 

@@ -21,10 +21,11 @@ sub register {
 
 sub wrap {
     my ($self, $element, $ctx) = @_;
+    my $node = $element->get(0);
 
-    my $is_tag = $element->tagname eq 'x-wrap';
-    my $template_name = $is_tag ? $element->attr('template')
-                                : $element->attr('data-plift-wrap');
+    my $is_tag = $node->localname eq 'x-wrap';
+    my $template_name = $is_tag ? $node->getAttribute('template')
+                                : $node->getAttribute('data-plift-wrap');
 
     $template_name ||= 'layout';
 
@@ -33,17 +34,17 @@ sub wrap {
 
     foreach (qw/ at if unless replace content /) {
 
-        my $value = $element->attr("data-$_") || $element->attr($_);
+        my $value = $node->getAttribute("data-$_") || $node->getAttribute($_);
 
         unless ($is_tag) {
-            $element->remove_attr("data-$_");
-            $element->remove_attr($_);
+            $node->removeAttribute("data-$_");
+            $node->removeAttribute($_);
         }
 
         $params{$_} = $value if $value;
     }
 
-    # contitional remove
+    # contitional abort
     if (
         (defined $params{if} && !$ctx->get($params{if}))
         || (defined $params{unless} && $ctx->get($params{unless}))
@@ -56,7 +57,7 @@ sub wrap {
     # load template
     my $dom = $ctx->process_template($template_name);
 
-    # $dom elements comes unbound of document, insert somewhere
+    # $dom elements comes unbound of document, insert after element
     $dom->insert_after($element);
 
     # find wrapper
@@ -67,12 +68,15 @@ sub wrap {
         unless $wrapper->size > 0;
 
     # wrap element
+
     my $is_xtag = $element->tagname =~ /^x-/;
     if ($params{replace}) {
+
         $wrapper->replace_with($is_xtag || $params{content} ? $element->contents : $element);
     }
     else {
-        $wrapper->append($is_xtag || $params{content} ? $element->contents : $element);
+
+        $wrapper->append($is_xtag || $params{content} ? $element->contents->{nodes} : $element->{nodes});
     }
 
     $element->remove if $is_xtag || $params{content};
