@@ -316,13 +316,16 @@ sub _find_template_file {
 
         if (-e (my $file = "$path/$template_name.html")) {
 
-            # check file is really child of path
-            $file = Path::Tiny->new($file)->realpath;
-            $path = Path::Tiny->new($path)->realpath;
+            $file = Path::Tiny->new($file);
+            $path = Path::Tiny->new($path);
 
-            unless ($path->subsumes($file)) {
-                die "[Plift] attempt to traverse out of path via '$template_name'";
-                return;
+            # if suspicious template name, check file is really child of path
+            if ($template_name =~ /\.\.\//) {
+                $file = $file->realpath;
+                $path = $path->realpath;
+
+                die "[Plift] attempt to traverse out of path via '$template_name'"
+                    unless $path->subsumes($file)
             }
 
             return wantarray ? ($file, $path) : $file;
