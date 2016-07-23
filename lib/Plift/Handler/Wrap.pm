@@ -54,15 +54,13 @@ sub wrap {
     }
 
     # load template
-    my $dom = $ctx->load_template($template_name);
+    my $dom = $ctx->process_template($template_name);
 
     # $dom elements comes unbound of document, insert somewhere
-    # and insert before process_element() so future widgets can see the whole document
     $dom->insert_after($element);
-    $ctx->process_element($dom);
 
     # find wrapper
-    my $wrapper = $dom->find($params{at})->first;
+    my $wrapper = $dom->find($params{at});
     $wrapper = $dom->filter($params{at}) if $wrapper->size == 0;
 
     confess "wrap error: can't find wrapper element (with id '".$params{at}."') on:\n".$dom->as_html

@@ -5,7 +5,7 @@ use warnings;
 use Moo;
 use Class::Load ();
 use Path::Tiny ();
-use XML::LibXML::jQuery ();
+use XML::LibXML::jQuery;
 use Carp;
 use Plift::Context;
 use Digest::MD5 qw/ md5_hex /;
@@ -46,8 +46,7 @@ sub BUILD {
     /;
 
     # plugins
-    push @components, map { /^\+/ ? $_ : 'Plugin::'.$_ }
-                      @{ $self->plugins };
+    push @components, map { /^\+/ ? $_ : 'Plugin::'.$_ } @{ $self->plugins };
 
     $self->load_components(@components);
 }
@@ -208,7 +207,6 @@ sub _load_template {
         if ($entry->{etag} eq $tpl_etag) {
 
             $dom = $entry->{dom}->clone->contents;
-            $dom->append_to($dom->document);
             $entry->{hits} += 1;
             $entry->{last_hit} = time;
             # printf STDERR "# Plift cache hit: '$tpl_file' => %d hits\n", $entry->{hits};
@@ -225,7 +223,7 @@ sub _load_template {
         # max file size
         my $tpl_size = defined $tpl_file ? $tpl_file->stat->size : length $tpl_source;
         die sprintf("Template '%s' exceeds the max_file_size option! (%d > %d)\n", $cache_key, $tpl_size, $self->max_file_size)
-            if$tpl_size > $self->max_file_size;
+            if $tpl_size > $self->max_file_size;
 
         # parse source
         if (defined $tpl_file) {
@@ -234,6 +232,20 @@ sub _load_template {
         }
 
         $dom = XML::LibXML::jQuery->new($tpl_source);
+
+        # check for data-plift-template attr, and use that element
+        my $body = $dom->xfind('//body[@data-plift-template]');
+
+        if ($body->size) {
+
+            my $selector = $body->attr('data-plift-template');
+            my $template_element = $dom->find($selector);
+            confess "Can't find template via selector '$selector' (referenced at <body data-plift-template=\"$selector\">)."
+                unless $template_element->size;
+
+            # create new document for the template elment
+            $dom = j()->document->append($template_element)->contents;
+        }
 
         # cache it
         if ($self->enable_cache) {
@@ -256,24 +268,13 @@ sub _load_template {
         }
     }
 
-    # check for data-plift-template attr, and use that element
-    my $body = $dom->xfind('//body[@data-plift-template]');
-
-    if ($body->size) {
-
-        my $selector = $body->attr('data-plift-template');
-        $dom = $dom->find($selector);
-        confess "Can't find template via selector '$selector' (referenced at <body data-plift-template=\"$selector\">)."
-            unless $dom->size;
-    }
-
     # adopt into document
     if (my $existing_document = $ctx->document) {
 
         $existing_document = $existing_document->get(0);
 
         # replace DTD
-        if ($dom->size && (my $dtd = $dom->get(0)->ownerDocument->internalSubset)) {
+        if (my $dtd = $dom->{document}->internalSubset) {
             $existing_document->removeInternalSubset;
             $existing_document->createInternalSubset( $dtd->getName, $dtd->publicId, $dtd->systemId );
         }
@@ -281,7 +282,7 @@ sub _load_template {
         # adopt nodes
         my @nodes = map { $existing_document->adoptNode($_); $_ }
                     grep { $_->nodeType != XML_DTD_NODE }
-                    grep { $_->getOwner->nodeType == XML_DOCUMENT_NODE }
+                    # grep { $_->getOwner->nodeType == XML_DOCUMENT_NODE }
                     @{ $dom->{nodes} };
 
         # reinstantitate on new document

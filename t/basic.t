@@ -14,6 +14,12 @@ isa_ok $engine->process('index'), 'XML::LibXML::jQuery', 'process()';
 like $engine->render('index'), qr/Hello Plift/, 'render()';
 
 
+subtest 'has_template' => sub {
+
+    is $engine->has_template('index'), 1;
+    is $engine->has_template('unknown'), '';
+};
+
 subtest '_find_template_file' => sub {
 
     is $engine->_find_template_file('index', $engine->paths), "$FindBin::Bin/templates/index.html";
@@ -71,6 +77,16 @@ subtest '_load_template' => sub {
               ->isSameNode($document);
 };
 
+
+subtest 'data-plift-template' => sub {
+
+    my $doc = $engine->process('layout/header');
+    note $doc->as_html;
+    is $doc->find('body')->size, 0;
+    is $doc->find('header')->size, 1;
+
+
+};
 
 subtest 'get_handler' => sub {
 

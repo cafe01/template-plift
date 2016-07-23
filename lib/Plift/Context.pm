@@ -355,10 +355,10 @@ sub render  {
     # apply wrapper
     if ($self->wrapper) {
 
-        my $wrapper_document = $self->process_template($self->wrapper);
-        $wrapper_document->insert_after($element);
-        $wrapper_document->find('#content')->append($element);
-        $element = $wrapper_document;
+        my $wrapper = $self->process_template($self->wrapper);
+        $wrapper->insert_after($element);
+        $wrapper->find('#content')->append($element);
+        $element = $wrapper;
     }
 
     # rewind directive stack, then render

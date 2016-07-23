@@ -5,6 +5,11 @@ Revision history for Perl extension Plift
     * added support for inline template
       - pass a scalarref with html source instead of template name
       - needed since not all applications stores the templates as files
+    * added URI dep
+    * implemented "data-plift-template" feature
+      - a body attribute pointing to the actual template element,
+      - used by load_template() method
+
 
 0.04 2016-07-21T04:14:15Z
 
