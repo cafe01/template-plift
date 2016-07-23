@@ -29,6 +29,17 @@ subtest 'wrap' => sub {
     is $doc->find('#content h1')->size, 1;
 };
 
+subtest 'wrap unless' => sub {
+
+    my $ctx = $engine->template('wrap/wrap-unless');
+    $ctx->set(is_ajax => 1);
+    my $doc = $ctx->render();
+
+    # note $doc->as_html;
+    is $doc->find('header, footer')->size, 0;
+    is $doc->find('x-wrap')->size, 0;
+};
+
 subtest 'at' => sub {
 
     my $ctx = $engine->template('wrap/at');
