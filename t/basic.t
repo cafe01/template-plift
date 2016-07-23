@@ -2,7 +2,7 @@ use strict;
 use Test::More 0.98;
 use FindBin;
 use Plift;
-
+use Test::Exception;
 
 my $engine = Plift->new(
     paths => ["$FindBin::Bin/templates", "$FindBin::Bin/other_templates"],
@@ -36,7 +36,7 @@ subtest '_find_template_file' => sub {
               ["$FindBin::Bin/templates/layout/footer.html", "$FindBin::Bin/templates"];
 
     # traverse out
-    is $engine->_find_template_file('../../../../../../../../../../etc/passwd', $engine->paths), undef;
+    dies_ok { $engine->_find_template_file('../other_templates/other_index', $engine->paths) };
 
     # null char attack
     is $engine->_find_template_file('index.secret'."\x00", $engine->paths), undef;

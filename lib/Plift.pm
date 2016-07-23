@@ -321,7 +321,7 @@ sub _find_template_file {
             $path = Path::Tiny->new($path)->realpath;
 
             unless ($path->subsumes($file)) {
-                warn "[Plift] attempt to traverse out of path via '$template_name'";
+                die "[Plift] attempt to traverse out of path via '$template_name'";
                 return;
             }
 
