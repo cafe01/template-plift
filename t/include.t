@@ -2,7 +2,7 @@ use strict;
 use Test::More 0.98;
 use FindBin;
 use Plift;
-
+use Test::Exception;
 
 my $engine = Plift->new(
     paths => ["$FindBin::Bin/templates", "$FindBin::Bin/other_templates"],
@@ -27,6 +27,7 @@ subtest 'include' => sub {
     is $doc->find('unless.false section')->size, 1, 'unless false';
 };
 
+dies_ok { $engine->process('include-error') } 'missing template name';
 
 
 

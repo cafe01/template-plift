@@ -32,8 +32,7 @@ sub include {
         $error .= $is_tag ? '<x-include template="<template_name>"'
                           : sprintf('<%s data-plift-include="<template_name>">', $element->tagname);
 
-        $element->html($element->new('<pre/>')->text($error));
-        return;
+        die $error;
     }
 
     # contitional remove
