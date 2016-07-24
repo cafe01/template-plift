@@ -27,6 +27,7 @@ subtest 'wrap' => sub {
     # note $doc->as_html;
     is $doc->find('header, footer')->size, 2;
     is $doc->find('#content h1')->size, 1;
+    is $doc->find('#content section')->size, 1;
 };
 
 subtest 'wrap unless' => sub {

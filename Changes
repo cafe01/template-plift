@@ -2,6 +2,10 @@ Revision history for Perl extension Plift
 
 {{$NEXT}}
 
+    [ BUG FIX ]
+    * fixed bug in process_element() where xfind() wouldn't find elements after xfilter()
+      - now collecting all xfilter() + xfind() nodes before processing
+
 0.06 2016-07-23T18:13:21Z
 
     [ PERFORMANCE ]

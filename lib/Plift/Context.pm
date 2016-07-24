@@ -299,12 +299,19 @@ sub process_element {
     my $filter_xpath = $find_xpath;
     $filter_xpath =~ s{\.//}{./}g;
 
-    $element->xfilter($filter_xpath)->each($callback);
-    $element->xfind($find_xpath)->each($callback);
+    foreach my $node (
+        @{ $element->xfilter($filter_xpath)->{nodes} },
+        @{ $element->xfind($find_xpath)->{nodes} }
+    ) {
+        
+        $self->_dispatch_handlers($node, $element->_new_nodes([$node]));
+    }
+
+    # printf STDERR "# afer filter: %s\n", $element->as_html;
 }
 
 sub _dispatch_handlers {
-    my ($self, $i, $node, $el) = @_;
+    my ($self, $node, $el) = @_;
     my $tagname = $node->localname;
 
     foreach my $handler (@{ $self->handlers }) {
@@ -339,7 +346,7 @@ sub _dispatch_handlers {
 sub render  {
     my ($self, $data) = @_;
 
-    $self->set($data)
+    @{ $self->_data_stack } = ( $data )
         if defined $data;
 
     # already rendering
