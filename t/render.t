@@ -60,6 +60,8 @@ sub test_render_directives {
             '^.replace-name name' => 'fullname',
             '^#append-replace-name name+' => 'fullname',
             '^+#prepend-replace-name name' => 'fullname',
+            '#contact-json' => 'contact',
+            '#contact-json@data-json' => 'contact',
         ])
         ->at('#code' => sub {
             my ($el, $ctx)  = @_;
@@ -102,6 +104,8 @@ sub test_render_directives {
     is $doc->find('.replace-name')->text, "Hello, $data{fullname}";
     is $doc->find('#append-replace-name')->text, "Hello, Mr $data{fullname}!";
     is $doc->find('#prepend-replace-name')->text, "Mr $data{fullname}, hello!";
+    like $doc->find('#contact-json')->text, qr/"phone":123/;
+    like $doc->find('#contact-json')->attr('data-json'), qr/"phone":123/;
 
     # CodeRef
     is $doc->find('#code div')->text, $data{fullname};

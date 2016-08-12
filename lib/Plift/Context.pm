@@ -4,6 +4,10 @@ use Moo;
 use Carp;
 use Scalar::Util qw/ blessed /;
 use XML::LibXML::jQuery;
+use JSON 'to_json';
+use Encode 'encode';
+use namespace::clean;
+
 
 has 'helper', is => 'ro';
 has 'wrapper', is => 'ro';
@@ -303,7 +307,7 @@ sub process_element {
         @{ $element->xfilter($filter_xpath)->{nodes} },
         @{ $element->xfind($find_xpath)->{nodes} }
     ) {
-        
+
         $self->_dispatch_handlers($node, $element->_new_nodes([$node]));
     }
 
@@ -404,6 +408,12 @@ sub _render_directives {
             my $value = $self->get($action);
 
             $target_element->remove unless defined $value;
+
+            # to_json
+            $value = to_json($value) if ref $value eq 'HASH';
+
+            # encode
+            $value = encode 'UTF-8', $value;
 
             if (defined $attribute && $attribute ne 'HTML') {
 

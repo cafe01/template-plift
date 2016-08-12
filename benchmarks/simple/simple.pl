@@ -10,6 +10,7 @@ use Template::Pure;
 use Path::Tiny;
 use Template;
 use HTML::Template;
+use HTML::Template::Pro;
 use XML::LibXML::jQuery;
 
 
@@ -28,9 +29,10 @@ my @jquery_cache = map {$_->document->clone } jquery_parse_files();
 # say "@jquery_cache";
 
 cmpthese(shift || 5000, {
-    Plift => \&plift,
+    # Plift => \&plift,
     # PliftWrapper => \&plift_wrapper,
     'HTML::Template'  => \&html_template,
+    'HTML::Template::Pro'  => \&html_template_pro,
     # 'Template::Pure'  => \&pure,
     # 'Template::Toolkit'  => \&tt,
     # read_files => \&read_files,
@@ -42,7 +44,7 @@ cmpthese(shift || 5000, {
 
 sub plift {
     my $doc = $plift->process("index-wrap");
-    # my $output = $doc->as_html;
+    my $output = $doc->as_html;
 }
 
 sub plift_wrapper {
@@ -53,6 +55,12 @@ sub plift_wrapper {
 sub html_template {
 
     my $html_template = HTML::Template->new( path => ["$FindBin::Bin/html_template"], filename => 'layout.html' );
+    # my $output = $html_template->output;
+}
+
+sub html_template_pro {
+
+    my $html_template = HTML::Template::Pro->new( path => ["$FindBin::Bin/html_template"], filename => 'layout.html' );
     # my $output = $html_template->output;
 }
 

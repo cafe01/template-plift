@@ -369,7 +369,7 @@ __END__
 
 =head1 NAME
 
-Plift - Designer friendly, safe, extensible HTML template engine.
+Plift - Pure HTML templates with reusable custom elements.
 
 =head1 SYNOPSIS
 
