@@ -2,6 +2,8 @@ Revision history for Perl extension Plift
 
 {{$NEXT}}
 
+0.07 2016-08-12T19:32:32Z
+
     [ NEW ]
     * implemented active_handlers/inactive_handlers options
     * implemented <x-meta/> handler

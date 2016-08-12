@@ -1,10 +1,10 @@
 {
-   "abstract" : "Designer friendly, safe, extensible HTML template engine.",
+   "abstract" : "Pure HTML templates with reusable custom elements.",
    "author" : [
       "Carlos Fernando Avila Gratz <cafe@kreato.com.br>"
    ],
    "dynamic_config" : 0,
-   "generated_by" : "Minilla/v3.0.1, CPAN::Meta::Converter version 2.150001",
+   "generated_by" : "Minilla/v3.0.3, CPAN::Meta::Converter version 2.150001",
    "license" : [
       "perl_5"
    ],
@@ -43,6 +43,7 @@
       "runtime" : {
          "requires" : {
             "Class::Load" : "0",
+            "JSON" : "0",
             "Moo" : "0",
             "Path::Tiny" : "0",
             "Scalar::Util" : "0",
@@ -71,6 +72,6 @@
          "web" : "https://github.com/cafe01/template-plift"
       }
    },
-   "version" : "0.06",
+   "version" : "0.07",
    "x_authority" : "cpan:CAFEGRATZ"
 }
