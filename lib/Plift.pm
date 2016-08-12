@@ -43,6 +43,7 @@ sub BUILD {
         Handler::Wrap
         Handler::Render
         Handler::Snippet
+        Handler::Meta
     /;
 
     # plugins

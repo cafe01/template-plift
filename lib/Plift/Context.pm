@@ -14,6 +14,7 @@ has 'wrapper', is => 'ro';
 has 'template', is => 'ro', required => 1;
 has 'encoding', is => 'ro', default => 'UTF-8';
 has 'loop_var', is => 'ro', default => 'loop';
+has 'metadata_key', is => 'ro', default => 'meta';
 has 'handlers', is => 'ro', default => sub { [] };
 has 'active_handlers', is => 'rw';
 has 'inactive_handlers', is => 'rw';
@@ -53,6 +54,14 @@ sub BUILD {
         $self->$attr({ map { $_ => 1 } @{ $self->$attr } })
             if $self->$attr;
     }
+}
+
+sub metadata {
+    my $self = shift;
+    my $key = $self->metadata_key;
+    my $data = $self->data;
+    $data->{$key} = {} unless exists $data->{$key};
+    $data->{$key};
 }
 
 
@@ -421,6 +430,7 @@ sub _render_directives {
         my $action = $directives->[$i+1];
 
         my $target_element = $el->find($selector);
+        $target_element = $el->filter($selector) if $target_element->size == 0;
         next unless $target_element->size > 0;
 
         # Scalar

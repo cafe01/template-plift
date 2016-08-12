@@ -4,10 +4,13 @@ Revision history for Perl extension Plift
 
     [ NEW ]
     * implemented active_handlers/inactive_handlers options
+    * implemented <x-meta/> handler
+      - templates can now set simple key/value metadata
 
     [ BUG FIX ]
     * fixed bug in process_element() where xfind() wouldn't find elements after xfilter()
       - now collecting all xfilter() + xfind() nodes before processing
+    * fixed a bug where render directives wouldn't match document-root elements
 
 0.06 2016-07-23T18:13:21Z
 

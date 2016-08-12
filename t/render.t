@@ -54,6 +54,7 @@ sub test_render_directives {
     my $tpl = $engine->template('render');
 
     $tpl->at([
+            '#root' => 'fullname',
             '#name' => 'fullname',
             '.append-name+' => 'fullname',
             '+.prepend-name' => 'fullname',
@@ -98,6 +99,7 @@ sub test_render_directives {
     # note $doc->as_html;
 
     # Scalar
+    is $doc->find('#root')->text, $data{fullname};
     is $doc->find('#name')->text, $data{fullname};
     is $doc->find('.append-name')->text, "Hello, $data{fullname}";
     is $doc->find('.prepend-name')->text, "$data{fullname}, hello!";
