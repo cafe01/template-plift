@@ -2,6 +2,9 @@ Revision history for Perl extension Plift
 
 {{$NEXT}}
 
+    [ NEW ]
+    * implemented active_handlers/inactive_handlers options
+
     [ BUG FIX ]
     * fixed bug in process_element() where xfind() wouldn't find elements after xfilter()
       - now collecting all xfilter() + xfind() nodes before processing

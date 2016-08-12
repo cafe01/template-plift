@@ -15,6 +15,8 @@ has 'template', is => 'ro', required => 1;
 has 'encoding', is => 'ro', default => 'UTF-8';
 has 'loop_var', is => 'ro', default => 'loop';
 has 'handlers', is => 'ro', default => sub { [] };
+has 'active_handlers', is => 'rw';
+has 'inactive_handlers', is => 'rw';
 has 'internal_id_attribute', is => 'ro', default => 'data-plift-id';
 has '_load_template', is => 'ro', required => 1, init_arg => 'load_template';
 has '_load_snippet', is => 'ro', required => 1, init_arg => 'load_snippet';
@@ -23,8 +25,8 @@ has '_load_snippet', is => 'ro', required => 1, init_arg => 'load_snippet';
 has 'document', is => 'rw', init_arg => undef;
 has 'is_rendering', is => 'rw', init_arg => undef, default => 0;
 
-has '_data_stack',   is => 'ro', default => sub { [] };
-has '_directive_stack',   is => 'ro', default => sub { [] };
+has '_data_stack',   is => 'ro', init_arg => undef, default => sub { [] };
+has '_directive_stack',   is => 'ro', init_arg => undef, default => sub { [] };
 
 
 sub AUTOLOAD {
@@ -40,6 +42,17 @@ sub AUTOLOAD {
         unless $self->helper && $self->helper->can($method);
 
     $self->helper->$method(@_);
+}
+
+sub BUILD {
+    my $self = shift;
+
+    # coerse array indo hash
+    foreach my $attr (qw/ active_handlers inactive_handlers/) {
+
+        $self->$attr({ map { $_ => 1 } @{ $self->$attr } })
+            if $self->$attr;
+    }
 }
 
 
@@ -298,8 +311,16 @@ sub process_element {
         $self->_dispatch_handlers(@_, $element->_new_nodes([$_[1]]));
     };
 
-    # xpath
-    my $find_xpath = join ' | ', map { $_->{xpath} } @{ $self->handlers };
+    # get handlers
+    my @handlers = @{ $self->handlers };
+    @handlers = grep { exists $self->active_handlers->{$_->{name}} } @handlers
+        if defined $self->active_handlers;
+
+    @handlers = grep { !exists $self->inactive_handlers->{$_->{name}} } @handlers
+        if defined $self->inactive_handlers;
+
+    # build xpath
+    my $find_xpath = join ' | ', map { $_->{xpath} } @handlers;
     my $filter_xpath = $find_xpath;
     $filter_xpath =~ s{\.//}{./}g;
 

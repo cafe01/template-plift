@@ -117,6 +117,29 @@ subtest 'render' => sub {
 };
 
 
+subtest 'active_handlers' => sub {
+
+    my $c = $engine->template('wrap/wrap', {
+        active_handlers => ['include']
+    });
+
+    my $doc = $c->render;
+    is $doc->find('x-wrap')->size, 1;
+    is $doc->find('section')->size, 1;
+};
+
+
+subtest 'inactive_handlers' => sub {
+
+    my $c = $engine->template('wrap/wrap', {
+        inactive_handlers => ['wrap']
+    });
+
+    my $doc = $c->render;
+    is $doc->find('x-wrap')->size, 1;
+    is $doc->find('section')->size, 1;
+};
+
 subtest 'helper' => sub {
 
     my $engine = Plift->new(

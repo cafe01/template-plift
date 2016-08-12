@@ -78,14 +78,14 @@ sub template {
 
     # path copy for the load_template closure
     # this way we do not expose the engine nor the path to the context object
-    my @paths = @{ $options->{paths} || $self->paths };
-    my @ns    = @{ $options->{snippet_namespaces} || $self->snippet_namespaces };
+    my @paths = @{ delete $options->{paths} || $self->paths };
+    my @ns    = @{ delete $options->{snippet_namespaces} || $self->snippet_namespaces };
+
+    $options->{$_} ||= $self->$_ for qw/ helper wrapper encoding /;
 
     Plift::Context->new(
+        %$options,
         template => $name,
-        helper   => $options->{helper}   || $self->helper,
-        wrapper  => $options->{wrapper}  || $self->wrapper,
-        encoding => $options->{encoding} || $self->encoding,
         handlers => [@{ $self->{handlers}}],
         load_template => sub {
             my ($ctx, $name) = @_;
