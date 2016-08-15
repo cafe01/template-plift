@@ -2,6 +2,13 @@ Revision history for Perl extension Plift
 
 {{$NEXT}}
 
+0.08 2016-08-15T16:11:18Z
+
+    [ NEW ]
+    * Plift::template() now supports the 'data' option
+      - so you can set the data before calling render()
+      - useful if you need a reference to the metadata hash before calling render()
+
 0.07 2016-08-12T19:32:32Z
 
     [ NEW ]

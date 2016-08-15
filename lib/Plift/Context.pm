@@ -26,7 +26,7 @@ has '_load_snippet', is => 'ro', required => 1, init_arg => 'load_snippet';
 has 'document', is => 'rw', init_arg => undef;
 has 'is_rendering', is => 'rw', init_arg => undef, default => 0;
 
-has '_data_stack',   is => 'ro', init_arg => undef, default => sub { [] };
+has '_data_stack',   is => 'ro', init_arg => 'data_stack', default => sub { [] };
 has '_directive_stack',   is => 'ro', init_arg => undef, default => sub { [] };
 
 
@@ -388,6 +388,9 @@ sub render  {
         if $self->is_rendering;
 
     $self->is_rendering(1);
+
+    # vivify metadata
+    my $meta = $self->metadata;
 
     # process template
     my $element = $self->process_template($self->template);

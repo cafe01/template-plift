@@ -11,7 +11,7 @@ use Plift::Context;
 use Digest::MD5 qw/ md5_hex /;
 use namespace::clean;
 
-our $VERSION = "0.07";
+our $VERSION = "0.08";
 
 use constant {
     XML_DOCUMENT_NODE      => 9,
@@ -83,6 +83,9 @@ sub template {
     my @ns    = @{ delete $options->{snippet_namespaces} || $self->snippet_namespaces };
 
     $options->{$_} ||= $self->$_ for qw/ helper wrapper encoding /;
+
+    $options->{data_stack} = [delete $options->{data}]
+        if defined $options->{data};
 
     Plift::Context->new(
         %$options,
@@ -370,7 +373,7 @@ __END__
 
 =head1 NAME
 
-Plift - Pure HTML templates with reusable custom elements.
+Plift - HTML Template Engine + Custom HTML Elements
 
 =head1 SYNOPSIS
 
