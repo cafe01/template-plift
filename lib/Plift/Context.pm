@@ -551,7 +551,7 @@ sub _parse_matchspec_modifiers {
 
 
 sub run_snippet {
-    my ($self, $name, $element, $params, $args) = @_;
+    my ($self, $name, $element, $params) = @_;
 
     # instantiate
     ($name, my $action) = split /\//, $name;
@@ -565,13 +565,12 @@ sub run_snippet {
         unless $method;
 
     # run
-    $snippet->$method($element, $args && ref $args eq 'ARRAY'? @$args : ());
+    $snippet->$method($element, $self, $params);
 }
 
 sub snippet {
     my ($self, $name, $params) = @_;
     $params ||= {};
-    $params->{context} = $self;
     $self->_load_snippet->($name, $params);
 }
 

@@ -33,15 +33,15 @@ elements for template designers to use, like:
     <x-form name="contact" />
 
     <blog-list limit="3">
-        <!-- html template for list posts here -->
+        <!-- html template for blog post here -->
     </blog-list>
 
     <gallery limit="3">
-        <!-- html template for list posts here -->
+        <!-- html template for gallery item here -->
     </gallery>
 
     <youtube-playlist id="...">
-     <!-- html template for list items here -->
+         <!-- html template for video item here -->
     </youtube-playlist>
 
 A kind of server-side L<"Custom Elements"|https://developer.mozilla.org/en-US/docs/Web/Web_Components/Custom_Elements>).

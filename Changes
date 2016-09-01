@@ -2,6 +2,11 @@ Revision history for Perl extension Plift
 
 {{$NEXT}}
 
+    [ INCOMPATIBLE CHANGE ]
+    * snippet action methods now receive the context and parameters as arguments
+      - The signature is: sub ($self, $element, $c, $params);
+    * the parameters hashref is also used as snippet constructor params
+
 0.08 2016-08-15T16:11:18Z
 
     [ NEW ]

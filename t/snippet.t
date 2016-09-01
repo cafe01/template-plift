@@ -31,34 +31,26 @@ BEGIN {
     package MyApp::Snippet::Header;
     use Moo;
 
-    has 'context', is => 'ro';
-
     sub process {
-        my ($self, $element) = @_;
+        my ($self, $element, $c) = @_;
 
-        $element->text($self->context->get('header'))
-
-
+        $element->text($c->get('header'));
     }
 
     package MyApp::Snippet::HelloUser;
     use Moo;
 
-    has 'user', is => 'ro';
-
     sub process {
-        my ($self, $element) = @_;
+        my ($self, $element, $c, $params) = @_;
 
-        $element->text('Hello, '.$self->user);
+        $element->text('Hello, '.$params->{user});
     }
 
     package MyApp::Snippet::Footer;
     use Moo;
 
-    has 'context', is => 'ro';
-
     sub process {
-        my $c = shift->context;
+        my ($self, $el, $c) = @_;
 
         $c->set( footer => { msg => 'footer snippet' })
           ->at('footer' => 'footer.msg');
