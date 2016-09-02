@@ -11,7 +11,7 @@ use Plift::Context;
 use Digest::MD5 qw/ md5_hex /;
 use namespace::clean;
 
-our $VERSION = "0.09";
+our $VERSION = "0.10";
 
 use constant {
     XML_DOCUMENT_NODE      => 9,
