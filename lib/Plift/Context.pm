@@ -151,7 +151,6 @@ sub pop_at {
 
 
 
-my $internal_id = 1;
 sub internal_id {
     my ($self, $node) = @_;
 
@@ -159,10 +158,16 @@ sub internal_id {
         if $node->isa('XML::LibXML::jQuery');
 
     unless ($node->hasAttribute($self->internal_id_attribute)) {
-        $node->setAttribute($self->internal_id_attribute, $internal_id++);
+        $node->setAttribute($self->internal_id_attribute, $node->unique_key);
     }
 
-    return $node->getAttribute($self->internal_id_attribute);
+    $node->getAttribute($self->internal_id_attribute);
+}
+
+sub selector_for {
+    my ($self, $element) = @_;
+    my $id = $self->internal_id($element);
+    sprintf '*[%s="%s"]', $self->internal_id_attribute, $id;
 }
 
 

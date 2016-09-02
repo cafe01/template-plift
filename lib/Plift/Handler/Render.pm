@@ -29,9 +29,7 @@ sub create_directives {
     $node->removeAttribute('data-render') unless $is_tag;
 
     # prepare selector
-    my $internal_id = $ctx->internal_id($element->get(0));
-    my $element_selector = sprintf '*[%s="%s"]', $ctx->internal_id_attribute, $internal_id;
-
+    my $element_selector = $ctx->selector_for($node);
 
     # data-render="[datapoint]" (step into directive)
     if ($render_instruction =~ /^\s*\[\s*([\w._-]+)\s*\]\s*$/) {

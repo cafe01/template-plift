@@ -3,6 +3,7 @@ use Test::More 0.98;
 use FindBin;
 use Plift;
 use Test::Exception;
+use XML::LibXML::jQuery;
 
 my $engine = Plift->new(
     paths => ["$FindBin::Bin/templates", "$FindBin::Bin/other_templates"],
@@ -104,6 +105,15 @@ subtest 'at' => sub {
         },
         four => 4
     ];
+};
+
+
+subtest 'selector_for' => sub {
+
+    my $c = $engine->template('index');
+    my $div = j('<div />');
+
+    is $c->selector_for($div), sprintf('*[%s="%s"]', $c->internal_id_attribute, $div->get(0)->unique_key);
 };
 
 

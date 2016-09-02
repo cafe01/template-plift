@@ -2,6 +2,11 @@ Revision history for Perl extension Plift
 
 {{$NEXT}}
 
+    [ NEW ]
+    * new context method selector_for($element)
+      - generate deterministic css selector for any html element,
+        based on libxml node's unique_key
+
 0.09 2016-09-01T21:52:45Z
 
     [ INCOMPATIBLE CHANGE ]
