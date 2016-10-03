@@ -70,6 +70,7 @@ sub test_render_directives {
                               ->append_to($el);
         })
         ->at('#contact' => [
+            '.@data-phone' => 'contact.phone',
             '.phone' => 'contact.phone',
             '.email' => 'contact.email'
         ])
@@ -113,6 +114,7 @@ sub test_render_directives {
     is $doc->find('#code div')->text, $data{fullname};
 
     # ArrayRef
+    is $doc->find('#contact')->attr('data-phone'), $data{contact}{phone};
     is $doc->find('#contact .phone')->text, $data{contact}{phone};
     is $doc->find('#contact .email')->text, $data{contact}{email};
 

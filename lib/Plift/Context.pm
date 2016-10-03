@@ -225,6 +225,8 @@ sub get {
     my ($self, $reference) = @_;
 
     my $data = $self->data;
+    return $data if $reference eq '.';
+
     my @keys = split /\./, $reference;
 
     # empty key
@@ -437,7 +439,7 @@ sub _render_directives {
         my ($selector, $attribute) = split '@', $match_spec;
         my $action = $directives->[$i+1];
 
-        my $target_element = $el->find($selector);
+        my $target_element = $selector eq '.' ? $el : $el->find($selector);
         $target_element = $el->filter($selector) if $target_element->size == 0;
         next unless $target_element->size > 0;
 
@@ -470,7 +472,7 @@ sub _render_directives {
                     unless $mod->{prepend} || $mod->{append};
 
                 $mod->{prepend} ? $target_element->prepend($value)
-                              : $target_element->append($value);
+                                : $target_element->append($value);
             }
         }
 
