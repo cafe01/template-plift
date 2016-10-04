@@ -2,6 +2,8 @@ Revision history for Perl extension Plift
 
 {{$NEXT}}
 
+0.11 2016-10-04T01:46:39Z
+
     * implemented special selector '.' to select the current DOM root
     * implemented methods 'hook($step, $callback) and run_hooks($step)'
       - implemented hook 'after_load_template'
