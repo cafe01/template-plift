@@ -98,6 +98,9 @@ sub template {
         load_snippet => sub {
             $self->_load_snippet(\@ns, @_);
         },
+        run_hooks => sub {
+            $self->run_hooks(@_);
+        },
     );
 }
 
@@ -170,6 +173,28 @@ sub get_handler {
     my ($self, $name) = @_;
     $self->{handlers_by_name}->{$name};
 }
+
+
+
+my %hooks;
+sub hook {
+    my ($self, $step, $cb) = @_;
+
+    croak "Usage: plift->hook(<step>, <callback>)"
+        unless $step && $cb && ref $cb eq 'CODE';
+
+    push @{$hooks{$step}}, $cb;
+    $self;
+}
+
+sub run_hooks {
+    my ($self, $step, $args) = @_;
+
+    foreach my $cb (@{ $hooks{$step} || [] }) {
+        $cb->(@{ $args || [] });
+    }
+}
+
 
 
 sub _load_template {
@@ -308,8 +333,6 @@ sub _load_template {
     else {
         $ctx->document($dom->document);
     }
-
-    # TODO apply input filters
 
     $dom;
 }

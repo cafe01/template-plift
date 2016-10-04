@@ -21,6 +21,7 @@ has 'inactive_handlers', is => 'rw';
 has 'internal_id_attribute', is => 'ro', default => 'data-plift-id';
 has '_load_template', is => 'ro', required => 1, init_arg => 'load_template';
 has '_load_snippet', is => 'ro', required => 1, init_arg => 'load_snippet';
+has '_run_hooks', is => 'ro', required => 1, init_arg => 'run_hooks';
 
 
 has 'document', is => 'rw', init_arg => undef;
@@ -307,7 +308,10 @@ sub process_template {
     local $self->{current_path} = $self->{current_path};
 
     my $element = $self->load_template($template_name);
+    $self->_run_hooks->('after_load_template', [$self, $element, $template_name]);
+    $self->_run_hooks->('before_process_template', [$self, $element, $template_name]);
     $self->process_element($element);
+    $self->_run_hooks->('after_process_template', [$self, $element, $template_name]);
 
     $element;
 }
@@ -413,7 +417,9 @@ sub render  {
 
     # rewind directive stack, then render
     $self->rewind_directive_stack;
+    $self->_run_hooks->('before_render_directives', [$self, $element]);
     $self->_render_directives($element, $self->directives->{directives});
+    $self->_run_hooks->('after_render_directives', [$self, $element]);
 
     # TODO output filters
 
