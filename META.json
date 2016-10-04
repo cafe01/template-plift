@@ -72,7 +72,7 @@
          "web" : "https://github.com/cafe01/template-plift"
       }
    },
-   "version" : "0.11",
+   "version" : "0.12",
    "x_authority" : "cpan:CAFEGRATZ",
    "x_serialization_backend" : "JSON::PP version 2.27300"
 }
