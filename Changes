@@ -9,6 +9,10 @@ Revision history for Perl extension Plift
       - implemented hook 'after_process_template'
       - implemented hook 'before_render_directives'
       - implemented hook 'after_render_directives'
+    * implemented 'data-remove-if' and 'data-remove-unless'
+      - conditionally remove HTML elements based on context data
+      - runs via 'after_load_template' hook
+
 
 0.10 2016-09-02T12:34:10Z
 

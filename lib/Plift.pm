@@ -50,7 +50,49 @@ sub BUILD {
     push @components, map { /^\+/ ? $_ : 'Plugin::'.$_ } @{ $self->plugins };
 
     $self->load_components(@components);
+
+    ## remove-if / remove-unless
+    $self->hook('after_load_template', \&_after_load_template);
 }
+
+sub _after_load_template {
+    my ($c, $dom) = @_;
+
+    # remove-if/unless
+    my $xpath =  join ' | ', map { ("./*[\@$_]", ".//*[\@$_]") }
+                             map { "data-$_"  }
+                             qw/ remove-if remove-unless /;
+
+    foreach my $node ( @{ $dom->xfilter($xpath)->{nodes} }, @{ $dom->xfind($xpath)->{nodes} } ) {
+
+        # remove-if
+        if (exists $node->{'remove-if'} || exists $node->{'data-remove-if'} ) {
+
+            if ($c->get($node->{'remove-if'} || $node->{'data-remove-if'})) {
+
+                $node->unbindNode;
+            } else {
+
+                delete $node->{'remove-if'};
+                delete $node->{'data-remove-if'};
+            }
+        }
+
+        # remove-unless
+        if (exists $node->{'remove-unless'} || exists $node->{'data-remove-unless'} ) {
+
+            unless ($c->get($node->{'remove-unless'} || $node->{'data-remove-unless'})) {
+
+                $node->unbindNode;
+            } else {
+
+                delete $node->{'remove-unless'};
+                delete $node->{'data-remove-unless'};
+            }
+        }
+    }
+}
+
 
 sub load_components {
     my $self = shift;

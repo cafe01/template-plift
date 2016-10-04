@@ -182,4 +182,4 @@ it under the same terms as Perl itself.
 
 # AUTHOR
 
-Carlos Fernando Avila Gratz &lt;cafe@kreato.com.br>
+Carlos Fernando Avila Gratz <cafe@kreato.com.br>
