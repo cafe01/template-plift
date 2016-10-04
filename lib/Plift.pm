@@ -60,7 +60,7 @@ sub _after_load_template {
 
     # remove-if/unless
     my $xpath =  join ' | ', map { ("./*[\@$_]", ".//*[\@$_]") }
-                             map { "data-$_"  }
+                             map { ($_, "data-$_")  }
                              qw/ remove-if remove-unless /;
 
     foreach my $node ( @{ $dom->xfilter($xpath)->{nodes} }, @{ $dom->xfind($xpath)->{nodes} } ) {
