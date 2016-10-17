@@ -457,7 +457,7 @@ sub _render_directives {
             $target_element->remove unless defined $value;
 
             # to_json
-            $value = to_json($value) if ref $value eq 'HASH';
+            $value = to_json($value, { convert_blessed => 1 }) if ref $value eq 'HASH';
 
             # encode
             $value = encode 'UTF-8', $value;

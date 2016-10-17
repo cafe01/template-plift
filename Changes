@@ -2,6 +2,9 @@ Revision history for Perl extension Plift
 
 {{$NEXT}}
 
+    * enabled the JSON's 'convert_blessed' option
+      - objects are now automatically converted to json if the support it
+
 0.12 2016-10-04T16:56:34Z
 
     * made 'data-' prefix optional for data-remove-if/unless
