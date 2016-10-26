@@ -2,6 +2,8 @@ Revision history for Perl extension Plift
 
 {{$NEXT}}
 
+0.14 2016-10-26T23:17:39Z
+
     * new context methods 'abort' and 'is_aborted'
       - call abort to stop any further processing
 
