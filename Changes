@@ -2,6 +2,9 @@ Revision history for Perl extension Plift
 
 {{$NEXT}}
 
+    * new context methods 'abort' and 'is_aborted'
+      - call abort to stop any further processing
+
 0.13 2016-10-17T18:30:10Z
 
     * enabled the JSON's 'convert_blessed' option

@@ -171,6 +171,31 @@ subtest 'helper' => sub {
     is $doc->find('section')->text, 'foo', 'context helper';
 };
 
+
+subtest 'abort()' => sub {
+
+
+    my $c = $engine->template(\'<foo/><bar/>');
+
+
+    $c->set( msg => 'must not render' )
+      ->at(
+        foo => sub {
+            my ($e, $c) = @_;
+            $e->text('OK');
+            $c->abort;
+        },
+        bar => 'msg'
+    );
+
+    my $doc = $c->render;
+
+    is $doc->find('foo')->text, 'OK';
+    is $doc->find('bar')->text, '';
+
+
+};
+
 done_testing;
 
 

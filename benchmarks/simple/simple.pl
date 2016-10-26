@@ -14,7 +14,7 @@ use HTML::Template::Pro;
 use XML::LibXML::jQuery;
 
 
-my $plift = Plift->new( paths => ["$FindBin::Bin/plift"], enable_cache => 1 );
+my $plift = Plift->new( paths => ["$FindBin::Bin/plift"], enable_cache => 0 );
 my $tt = Template->new( INCLUDE_PATH => ["$FindBin::Bin/tt"] );
 
 
@@ -29,11 +29,11 @@ my @jquery_cache = map {$_->document->clone } jquery_parse_files();
 # say "@jquery_cache";
 
 cmpthese(shift || 5000, {
-    # Plift => \&plift,
+    Plift => \&plift,
     # PliftWrapper => \&plift_wrapper,
-    'HTML::Template'  => \&html_template,
-    'HTML::Template::Pro'  => \&html_template_pro,
-    # 'Template::Pure'  => \&pure,
+    # 'HTML::Template'  => \&html_template,
+    # 'HTML::Template::Pro'  => \&html_template_pro,
+    'Template::Pure'  => \&pure,
     # 'Template::Toolkit'  => \&tt,
     # read_files => \&read_files,
     # jquery_parse_files => \&jquery_parse_files,

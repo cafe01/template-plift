@@ -26,6 +26,7 @@ has '_run_hooks', is => 'ro', required => 1, init_arg => 'run_hooks';
 
 has 'document', is => 'rw', init_arg => undef;
 has 'is_rendering', is => 'rw', init_arg => undef, default => 0;
+has 'is_aborted', is => 'rw', init_arg => undef, default => '';
 
 has '_data_stack',   is => 'ro', init_arg => 'data_stack', default => sub { [] };
 has '_directive_stack',   is => 'ro', init_arg => undef, default => sub { [] };
@@ -296,6 +297,7 @@ sub get {
     return $data;
 }
 
+sub abort { shift->is_aborted(1) }
 
 sub process_template {
     my ($self, $template_name) = @_;
@@ -349,6 +351,7 @@ sub process_element {
         @{ $element->xfind($find_xpath)->{nodes} }
     ) {
 
+        last if $self->is_aborted;
         $self->_dispatch_handlers($node, $element->_new_nodes([$node]));
     }
 
@@ -360,6 +363,8 @@ sub _dispatch_handlers {
     my $tagname = $node->localname;
 
     foreach my $handler (@{ $self->handlers }) {
+
+        last if $self->is_aborted;
 
         # dispatch by tagname
         my $handler_match = 0;
@@ -399,12 +404,16 @@ sub render  {
         if $self->is_rendering;
 
     $self->is_rendering(1);
+    $self->is_aborted(0);
 
     # vivify metadata
     my $meta = $self->metadata;
 
     # process template
     my $element = $self->process_template($self->template);
+
+    # aborted
+    return $element->document if $self->is_aborted;
 
     # apply wrapper
     if ($self->wrapper) {
@@ -436,6 +445,8 @@ sub _render_directives {
     my ($self, $el, $directives) = @_;
 
     for (my $i = 0; $i < @$directives; $i += 2) {
+
+        last if $self->is_aborted;
 
         my $match_spec = $directives->[$i];
 
