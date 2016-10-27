@@ -2,6 +2,8 @@ Revision history for Perl extension Plift
 
 {{$NEXT}}
 
+0.15 2016-10-27T14:24:18Z
+
     * replaced Scalar::Util by Ref::Util
     * context get() method now tries to find a hash key when
       it doesn't find a method on blessed targets.
