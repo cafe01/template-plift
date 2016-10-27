@@ -40,7 +40,9 @@ subtest 'set()' => sub {
 subtest 'get()' => sub {
 
     my $ctx = $engine->template('index');
+
     my $object = Some::Class->new;
+    $object->{plain_key} = 'foo';
 
     $ctx->set({
         value => 'foo',
@@ -68,9 +70,12 @@ subtest 'get()' => sub {
     is $ctx->get('deep.hash.value'), 'foo', 'deep.hash.value';
     is $ctx->get('array.0'), 'foo', 'array.0';
     is $ctx->get('array.1'), 'bar', 'array.1';
+    dies_ok { $ctx->get('array.foo'), 'bar', 'array.1' } 'array.foo';
     is $ctx->get('complex.array_of_hash.0.value'), 'foo', 'complex.array_of_hash.0.value';
     is $ctx->get('complex.hash_of_array.items.0'), 'foo', 'complex.hash_of_array.items.0.value';
+    is $ctx->get('object.plain_key'), $object->{plain_key}, 'object.plain_key';
     is $ctx->get('object.foo_method'), $object->foo_method, 'object.method';
+    dies_ok { $ctx->get('object.invalid') } 'object.invalid';
     is $ctx->get('code'), 'foo', 'code';
     dies_ok { $ctx->get('code.foo') } 'traverse thru code';
     is $ctx->get('user.name'), 'First Last', 'code with data args';

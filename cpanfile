@@ -10,6 +10,6 @@ requires 'URI';
 requires 'namespace::clean';
 requires 'Class::Load';
 requires 'Path::Tiny';
-requires 'Scalar::Util';
+requires 'Ref::Util';
 requires 'JSON';
 requires 'XML::LibXML::jQuery', '0.08';

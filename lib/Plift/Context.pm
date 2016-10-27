@@ -2,11 +2,11 @@ package Plift::Context;
 
 use Moo;
 use Carp;
-use Scalar::Util qw/ blessed /;
 use XML::LibXML::jQuery;
 use JSON 'to_json';
 use Encode 'encode';
 use namespace::clean;
+use Ref::Util qw/ is_hashref is_blessed_ref /;
 
 
 has 'helper', is => 'ro';
@@ -37,7 +37,7 @@ sub AUTOLOAD {
 
     my ($package, $method) = our $AUTOLOAD =~ /^(.+)::(.+)$/;
     Carp::croak "Undefined subroutine &${package}::$method called"
-        unless Scalar::Util::blessed $self && $self->isa(__PACKAGE__);
+        unless is_blessed_ref $self && $self->isa(__PACKAGE__);
 
     return if $method eq 'DESTROY';
 
@@ -252,8 +252,6 @@ sub get {
         die "get('$reference') error: can't traverse key '$key': '$current_path' is a non-ref value."
             unless ref $data;
 
-        # append path
-        $current_path .= length $current_path ? ".$key" : $key;
 
         my $next_data;
 
@@ -272,12 +270,18 @@ sub get {
             $next_data = $data->[$key];
         }
 
-        elsif (blessed $data) {
+        elsif (is_blessed_ref $data) {
 
-            die sprintf("get('%s') error: '%s' is an '%s' instance and '%s' is not a existing method.",
-                $reference, $current_path, ref $data, $key) unless $data->can($key);
-
-            $next_data = $data->$key;
+            if ($data->can($key)) {
+                $next_data = $data->$key;
+            }
+            elsif (is_hashref $data && exists $data->{$key}) {
+                $next_data = $data->{$key};
+            }
+            else {
+                die sprintf("get('%s') error: '%s' is an '%s' instance and '%s' is not a existing method or property.",
+                    $reference, $current_path, ref $data, $key);
+            }
         }
 
         elsif (ref $data) {
@@ -291,7 +295,11 @@ sub get {
             if ref $next_data eq 'CODE';
 
         $data = $next_data;
+
+        # append path
+        $current_path .= length $current_path ? ".$key" : $key;
     }
+
 
     $data = '' unless defined $data;
     return $data;

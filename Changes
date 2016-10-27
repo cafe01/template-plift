@@ -2,6 +2,11 @@ Revision history for Perl extension Plift
 
 {{$NEXT}}
 
+    * replaced Scalar::Util by Ref::Util
+    * context get() method now tries to find a hash key when
+      it doesn't find a method on blessed targets.
+    * fixed the current path shown on error messages
+
 0.14 2016-10-26T23:17:39Z
 
     * new context methods 'abort' and 'is_aborted'
